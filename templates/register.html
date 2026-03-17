@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+
+{% block title %}Register - MedAppoint{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+        
+        <form action="{{ url_for('register') }}" method="POST">
+            <div class="form-group">
+                <label for="name"><i class="fas fa-user"></i> Full Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="Enter your full name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password"><i class="fas fa-lock"></i> Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm your password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="role"><i class="fas fa-user-tag"></i> Register as</label>
+                <select id="role" name="role" class="form-control" required onchange="toggleDoctorFields()">
+                    <option value="">Select Role</option>
+                    <option value="patient">Patient</option>
+                    <option value="doctor">Doctor</option>
+                </select>
+            </div>
+            
+            <div id="doctor-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="specialization"><i class="fas fa-graduation-cap"></i> Specialization</label>
+                    <input type="text" id="specialization" name="specialization" class="form-control" placeholder="e.g., Cardiologist, Dermatologist">
+                </div>
+                
+                <div class="form-group">
+                    <label for="qualification"><i class="fas fa-certificate"></i> Qualification</label>
+                    <input type="text" id="qualification" name="qualification" class="form-control" placeholder="e.g., MBBS, MD">
+                </div>
+                
+                <div class="form-group">
+                    <label for="experience"><i class="fas fa-briefcase"></i> Experience (Years)</label>
+                    <input type="number" id="experience" name="experience" class="form-control" placeholder="e.g., 5">
+                </div>
+
+                <div class="form-group">
+                    <label for="consultation_fee"><i class="fas fa-money-bill-wave"></i> Consultation Fee (₹)</label>
+                    <input type="number" id="consultation_fee" name="consultation_fee" class="form-control" placeholder="e.g., 500" step="0.01">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
+                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter your phone number" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="address"><i class="fas fa-home"></i> Address</label>
+                <textarea id="address" name="address" class="form-control" rows="3" placeholder="Enter your complete address" required></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-user-plus"></i> Register
+            </button>
+        </form>
+        
+        <p class="auth-link">
+            Already have an account? <a href="{{ url_for('login') }}">Login here</a>
+        </p>
+    </div>
+</div>
+
+<script>
+function toggleDoctorFields() {
+    const role = document.getElementById('role').value;
+    const doctorFields = document.getElementById('doctor-fields');
+    doctorFields.style.display = role === 'doctor' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends "layout.html" %}
+
+{% block title %}Patient Dashboard - MedAppoint{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <h1><i class="fas fa-user"></i> Patient Dashboard</h1>
+        <p>Welcome back, {{ name }}! Here's your healthcare overview.</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-user-md"></i>
+                <div class="stat-info">
+                    <h3>{{ current_doctors|length }}</h3>
+                    <p>Current Doctors</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-calendar-check"></i>
+                <div class="stat-info">
+                    <h3>{{ appointments|length }}</h3>
+                    <p>Appointments</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-prescription"></i>
+                <div class="stat-info">
+                    <h3>{{ prescription_count }}</h3>
+                    <p>Prescriptions</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-file-medical-alt"></i>
+                <div class="stat-info">
+                    <h3>3</h3>
+                    <p>Medical Reports</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+            <div class="card">
+                <h3><i class="fas fa-bell"></i> Recent Alerts</h3>
+                {% if notifications %}
+                <ul style="list-style: none; padding: 0;">
+                    {% for notif in notifications[:3] %}
+                    <li style="padding: 1rem; border-bottom: 1px solid #eee; background: #fcfcfc;">
+                        <small style="color: #666;">{{ notif.type|title }} • {{ notif.created_at.strftime('%H:%M')
+                            }}</small>
+                        <p style="margin: 5px 0 0 0; font-size: 0.95rem;">{{ notif.message }}</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <a href="{{ url_for('patient_notifications') }}" class="btn btn-sm btn-outline-primary w-100 mt-2">View
+                    All Notifications</a>
+                {% else %}
+                <p style="color: #666;">No unread alerts.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; flex-direction: column;">
+                    <a href="{{ url_for('appointment') }}" class="btn btn-primary text-left">
+                        <i class="fas fa-calendar-plus"></i> Book Appointment
+                    </a>
+                    <a href="{{ url_for('medical_reports') }}" class="btn btn-secondary text-left">
+                        <i class="fas fa-file-medical"></i> My Medical Records
+                    </a>
+                    <a href="{{ url_for('current_doctor') }}" class="btn btn-success text-left">
+                        <i class="fas fa-user-md"></i> My Doctors
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+            <div class="card">
+                <h3><i class="fas fa-user-md"></i> Current Doctors</h3>
+                {% if current_doctors %}
+                <ul style="list-style: none; padding: 0;">
+                    {% for cd in current_doctors %}
+                    <li
+                        style="padding: 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>{{ cd.doctor.name }}</strong><br>
+                            <small style="color: #3498db;">{{ cd.doctor.specialization }}</small>
+                        </div>
+                        <button class="btn btn-sm btn-primary"
+                            onclick="location.href='{{ url_for('current_doctor') }}'">
+                            View
+                        </button>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No current doctors assigned yet.</p>
+                <a href="{{ url_for('appointment') }}" class="btn btn-primary">Book Your First Appointment</a>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-calendar-alt"></i> Recent Appointments</h3>
+                {% if appointments %}
+                <ul style="list-style: none; padding: 0;">
+                    {% for app in appointments %}
+                    <li style="padding: 1rem; border-bottom: 1px solid #eee;">
+                        <strong>{{ app.doctor.name }}</strong><br>
+                        <small>{{ app.date }} at {{ app.time }}</small><br>
+                        <span class="status-badge status-{{ app.status }}">
+                            {{ app.status|title }}
+                        </span>
+                        <span class="status-badge payment-{{ app.payment_status }}">
+                            Payment: {{ app.payment_status|title }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>No appointments yet.</p>
+                <a href="{{ url_for('appointment') }}" class="btn btn-primary">Book an Appointment</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-approved {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-rejected {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .payment-pending {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+
+    .payment-paid {
+        background-color: #d1ecf1;
+        color: #0c5460;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "layout.html" %}
+
+{% block title %}Doctor Dashboard - MedAppoint{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <h1><i class="fas fa-user-md"></i> Doctor Dashboard</h1>
+        <p>Welcome, Dr. {{ name }}!</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-clock"></i>
+                <div class="stat-info">
+                    <h3>{{ pending_appointments|length }}</h3>
+                    <p>Pending Appointments</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <div class="stat-info">
+                    <h3>{{ current_patients|length }}</h3>
+                    <p>Current Patients</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-calendar-check"></i>
+                <div class="stat-info">
+                    <h3>{{ approved_appointments|length }}</h3>
+                    <p>Approved Appointments</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-prescription"></i>
+                <div class="stat-info">
+                    <h3>0</h3>
+                    <p>Prescriptions Today</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 2rem;">
+            <div class="card">
+                <h3><i class="fas fa-clock"></i> Pending Appointment Requests</h3>
+                {% if pending_appointments %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Date & Time</th>
+                                <th>Symptoms</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in pending_appointments %}
+                            <tr>
+                                <td>{{ app.patient.name }}</td>
+                                <td>{{ app.date }}<br>{{ app.time }}</td>
+                                <td>{{ app.symptoms[:50] }}{% if app.symptoms|length > 50 %}...{% endif %}</td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-success approve-appointment-btn"
+                                        data-appointment-id="{{ app.id }}">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger reject-appointment-btn"
+                                        data-appointment-id="{{ app.id }}">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>No pending appointment requests.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-users"></i> Current Patients</h3>
+                {% if current_patients %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Contact</th>
+                                <th>Assigned Since</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cp in current_patients %}
+                            <tr>
+                                <td>{{ cp.patient.name }}</td>
+                                <td>{{ cp.patient.phone }}<br>{{ cp.patient.email }}</td>
+                                <td>{{ cp.assigned_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                        <button class="btn btn-sm btn-primary"
+                                            onclick="location.href='/doctor/prescription/{{ cp.patient.id }}'">
+                                            <i class="fas fa-prescription"></i> Write Prescription
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info"
+                                            onclick="location.href='/doctor/patient-records/{{ cp.patient.id }}'">
+                                            <i class="fas fa-folder-open"></i> View Shared Records
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>No current patients.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if approved_appointments %}
+        <div class="card">
+            <h3><i class="fas fa-history"></i> Recent Approved Appointments</h3>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Date & Time</th>
+                            <th>Symptoms</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in approved_appointments %}
+                        <tr>
+                            <td>{{ app.patient.name }}</td>
+                            <td>{{ app.date }} at {{ app.time }}</td>
+                            <td>{{ app.symptoms[:50] }}{% if app.symptoms|length > 50 %}...{% endif %}</td>
+                            <td><span class="status-badge status-approved">Approved</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-approved {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}

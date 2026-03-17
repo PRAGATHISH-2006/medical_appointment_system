@@ -1,0 +1,304 @@
+{% extends "layout.html" %}
+
+{% block title %}Book Appointment - MedAppoint{% endblock %}
+
+{% block extra_head %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <h1><i class="fas fa-calendar-plus"></i> Book Appointment</h1>
+        <p>Welcome, {{ name }}! Book an appointment with a doctor.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+            <div class="card">
+                <h3><i class="fas fa-search"></i> Available Doctors</h3>
+
+                {% if doctors %}
+                <div class="doctor-grid">
+                    {% for doctor in doctors %}
+                    <div class="doctor-card">
+                        <h4>Dr. {{ doctor.name }}</h4>
+                        <div class="specialization">{{ doctor.specialization }}</div>
+                        <p><i class="fas fa-graduation-cap"></i> {{ doctor.qualification }}</p>
+                        <p><i class="fas fa-briefcase"></i> {{ doctor.experience }} years experience</p>
+                        <p><i class="fas fa-money-bill-wave"></i> Consultation Fee: ₹{{ doctor.consultation_fee }}</p>
+                        <p><i class="fas fa-phone"></i> {{ doctor.phone }}</p>
+                        <button class="btn btn-primary w-100 mt-3 btn-book" data-id="{{ doctor.id }}"
+                            data-name="{{ doctor.name }}" data-specialization="{{ doctor.specialization }}"
+                            data-fee="{{ doctor.consultation_fee }}">
+                            <i class="fas fa-calendar-check"></i> Book Appointment
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p>No doctors available at the moment.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-calendar-alt"></i> Book Appointment Form</h3>
+
+                <form id="appointmentForm" onsubmit="handleAppointmentSubmit(event)">
+                    <div class="form-group">
+                        <label for="doctor_id">Select Doctor</label>
+                        <select id="doctor_id" name="doctor_id" class="form-control" required
+                            onchange="handleDoctorChange()">
+                            <option value="">Select a doctor</option>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}" data-fee="{{ doctor.consultation_fee }}">Dr. {{ doctor.name
+                                }} - {{ doctor.specialization }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Appointment Date</label>
+                        <input type="date" id="date" name="date" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="time">Appointment Time</label>
+                        <input type="time" id="time" name="time" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="symptoms">Symptoms / Reason for Visit</label>
+                        <textarea id="symptoms" name="symptoms" class="form-control" rows="4"
+                            placeholder="Describe your symptoms or reason for the appointment..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <textarea id="notes" name="notes" class="form-control" rows="3"
+                            placeholder="Any additional information..."></textarea>
+                    </div>
+
+                    <div id="payment_section"
+                        style="display:none; border-top: 1px solid #ddd; padding-top: 20px; margin-top: 20px;">
+                        <h4>Payment Details</h4>
+                        <p><strong>Consultation Fee: ₹<span id="display_fee">0</span></strong></p>
+
+                        <div class="form-group">
+                            <label>Payment Method</label>
+                            <div class="radio-group" style="display: flex; gap: 1rem;">
+                                <label style="cursor: pointer;">
+                                    <input type="radio" name="payment_method" value="offline" checked
+                                        onchange="togglePaymentFields()"> Pay at Clinic
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="radio" name="payment_method" value="online"
+                                        onchange="togglePaymentFields()"> Pay Online
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="online_payment_fields"
+                            style="display: none; background: #f8f9fa; padding: 15px; border-radius: 5px;">
+                            <h5><i class="fas fa-credit-card"></i> Online Payment</h5>
+                            <p>Select your preferred payment method:</p>
+
+                            <div class="payment-options-grid">
+                                <div class="payment-option-card" onclick="selectPaymentOption('GPay', 'fa-google-pay')">
+                                    <i class="fab fa-google-pay" style="font-size: 2.5rem;"></i>
+                                    <span>GPay</span>
+                                </div>
+                                <div class="payment-option-card"
+                                    onclick="selectPaymentOption('PhonePe', 'fa-mobile-alt')">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <span>PhonePe</span>
+                                </div>
+                                <div class="payment-option-card" onclick="selectPaymentOption('Paytm', 'fa-wallet')">
+                                    <i class="fas fa-wallet"></i>
+                                    <span>Paytm</span>
+                                </div>
+                                <div class="payment-option-card"
+                                    onclick="selectPaymentOption('Amazon Pay', 'fa-amazon-pay')">
+                                    <i class="fab fa-amazon-pay" style="font-size: 2.5rem;"></i>
+                                    <span>Amazon Pay</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="selected_provider" name="selected_provider">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                        <i class="fas fa-paper-plane"></i> Submit Appointment Request
+                    </button>
+                </form>
+
+                <div class="mt-4" style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                    <h4><i class="fas fa-info-circle"></i> Important Information</h4>
+                    <ul style="padding-left: 1.5rem; color: #666;">
+                        <li>Appointments are subject to doctor's approval</li>
+                        <li>You'll receive notification when doctor responds</li>
+                        <li>Please arrive 10 minutes before your appointment time</li>
+                        <li>Cancel at least 24 hours in advance if needed</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulated Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalProviderTitle">Payment Provider</h3>
+                <span class="close" onclick="closePaymentModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="payment_processing_overlay">
+                    <div class="payment-spinner"></div>
+                    <p>Processing Payment...</p>
+                </div>
+                <div class="payment-provider-home">
+                    <div class="provider-logo" id="providerLogo">
+                        <i class="fas fa-money-check-alt"></i>
+                        <span id="providerNameDisplay">Provider Name</span>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px; margin-bottom: 1.5rem;">
+                        <p style="margin-bottom: 0.5rem; color: #666;">Paying to</p>
+                        <h4 style="margin: 0; color: #2c3e50;">MedAppoint Healthcare</h4>
+                        <p style="margin: 5px 0 0 0; font-size: 1.2rem; font-weight: bold; color: #3498db;">₹<span
+                                id="modal_fee">0</span></p>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 1.5rem;">By clicking Pay, you agree to the
+                        terms and conditions of the payment provider.</p>
+                    <button type="button" class="btn btn-success w-100" onclick="processSimulatedPayment()">
+                        <i class="fas fa-shield-alt"></i> Pay Securely
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set up event listeners for book buttons
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.btn-book')) {
+            const btn = e.target.closest('.btn-book');
+            const doctorId = btn.dataset.id;
+            const doctorName = btn.dataset.name;
+            const specialization = btn.dataset.specialization;
+            const fee = btn.dataset.fee;
+
+            document.getElementById('doctor_id').value = doctorId;
+            document.getElementById('display_fee').innerText = fee;
+            document.getElementById('payment_section').style.display = 'block';
+            document.getElementById('appointmentForm').scrollIntoView({ behavior: 'smooth' });
+
+            alert(`Selected Dr. ${doctorName} - ${specialization}\nFee: ₹${fee}\n\nPlease fill in the rest of the appointment details.`);
+        }
+    });
+
+    function handleDoctorChange() {
+        const select = document.getElementById('doctor_id');
+        const selectedOption = select.options[select.selectedIndex];
+
+        if (selectedOption.value) {
+            const fee = selectedOption.dataset.fee;
+            document.getElementById('display_fee').innerText = fee;
+            document.getElementById('payment_section').style.display = 'block';
+        } else {
+            document.getElementById('payment_section').style.display = 'none';
+        }
+    }
+
+    function togglePaymentFields() {
+        const method = document.querySelector('input[name="payment_method"]:checked').value;
+        document.getElementById('online_payment_fields').style.display = method === 'online' ? 'block' : 'none';
+    }
+
+    let selectedProviderName = '';
+    let selectedProviderIcon = '';
+
+    function selectPaymentOption(name, icon) {
+        selectedProviderName = name;
+        selectedProviderIcon = icon;
+
+        // Update selection UI
+        document.querySelectorAll('.payment-option-card').forEach(card => card.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById('selected_provider').value = name;
+    }
+
+    function openPaymentModal() {
+        if (!selectedProviderName) {
+            alert('Please select a payment provider first.');
+            return;
+        }
+
+        const fee = document.getElementById('display_fee').innerText;
+        document.getElementById('modal_fee').innerText = fee;
+        document.getElementById('modalProviderTitle').innerText = selectedProviderName + ' Checkout';
+        document.getElementById('providerNameDisplay').innerText = selectedProviderName;
+
+        const providerLogoIcon = document.getElementById('providerLogo').querySelector('i');
+        providerLogoIcon.className = '';
+        if (selectedProviderIcon.startsWith('fab')) {
+            providerLogoIcon.classList.add('fab', selectedProviderIcon);
+        } else {
+            providerLogoIcon.classList.add('fas', selectedProviderIcon);
+        }
+
+        document.getElementById('paymentModal').style.display = 'flex';
+    }
+
+    function closePaymentModal() {
+        document.getElementById('paymentModal').style.display = 'none';
+        document.getElementById('payment_processing_overlay').style.display = 'none';
+    }
+
+    async function processSimulatedPayment() {
+        const overlay = document.getElementById('payment_processing_overlay');
+        overlay.style.display = 'flex';
+
+        // Wait for 2 seconds
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        alert('Payment Successful!');
+        closePaymentModal();
+
+        // Submit the form
+        const form = document.getElementById('appointmentForm');
+        form.action = "{{ url_for('appointment') }}";
+        form.method = "POST";
+        form.submit();
+    }
+
+    async function handleAppointmentSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const method = formData.get('payment_method');
+
+        if (method === 'online') {
+            openPaymentModal();
+        } else {
+            // Submit offline booking
+            form.action = "{{ url_for('appointment') }}";
+            form.method = "POST";
+            form.submit();
+        }
+    }
+
+    // Set minimum date to today
+    document.addEventListener('DOMContentLoaded', function () {
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('date');
+        dateInput.min = today;
+
+        // Set default date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        dateInput.value = tomorrow.toISOString().split('T')[0];
+
+        // Set default time to 10:00 AM
+        document.getElementById('time').value = '10:00';
+    });
+</script>
+{% endblock %}
