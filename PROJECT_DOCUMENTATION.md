@@ -1,4 +1,4 @@
-# 🏥 Medicalcare: Professional System Documentation
+# 🏥 Medicalcare
 
 ## 🌟 1. Executive Summary
 Medicalcare is a **state-of-the-art** healthcare management platform designed to digitize and optimize the relationship between patients and healthcare providers. The system centralizes appointment scheduling, medical record management, and prescription delivery within a secure, role-based ecosystem.
