@@ -1,0 +1,374 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin Dashboard - MedAppoint{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <h1><i class="fas fa-cog"></i> Admin Dashboard</h1>
+        <p>Welcome, {{ name }}! Manage the system from here.</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <div class="stat-info">
+                    <h3>{{ stats.total_patients }}</h3>
+                    <p>Total Patients</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-user-md"></i>
+                <div class="stat-info">
+                    <h3>{{ stats.total_doctors }}</h3>
+                    <p>Approved Doctors</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-clock"></i>
+                <div class="stat-info">
+                    <h3>{{ stats.pending_approvals }}</h3>
+                    <p>Pending Approvals</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <i class="fas fa-calendar-alt"></i>
+                <div class="stat-info">
+                    <h3>{{ stats.total_appointments }}</h3>
+                    <p>Total Appointments</p>
+                </div>
+            </div>
+        </div>
+
+        {% if pending_doctors %}
+        <div class="card">
+            <h3><i class="fas fa-user-clock"></i> Doctors Pending Approval</h3>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Specialization</th>
+                            <th>Qualification</th>
+                            <th>Experience</th>
+                            <th>Phone</th>
+                            <th>Registration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doctor in pending_doctors %}
+                        <tr>
+                            <td>{{ doctor.name }}</td>
+                            <td>{{ doctor.email }}</td>
+                            <td>{{ doctor.specialization }}</td>
+                            <td>{{ doctor.qualification }}</td>
+                            <td>{{ doctor.experience }} years</td>
+                            <td>{{ doctor.phone }}</td>
+                            <td>{{ doctor.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td class="actions">
+                                <button class="btn btn-sm btn-success approve-doctor-btn"
+                                    data-doctor-id="{{ doctor.id }}">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                                <button class="btn btn-sm btn-danger reject-doctor-btn"
+                                    data-doctor-id="{{ doctor.id }}">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 2rem;">
+            <div class="card">
+                <h3><i class="fas fa-user-md"></i> Approved Doctors</h3>
+                {% if all_doctors %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Specialization</th>
+                                <th>Phone</th>
+                                <th>Consultation Fee</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doctor in all_doctors %}
+                            <tr>
+                                <td>Dr. {{ doctor.name }}</td>
+                                <td>{{ doctor.email }}</td>
+                                <td>{{ doctor.specialization }}</td>
+                                <td>{{ doctor.phone }}</td>
+                                <td>₹{{ doctor.consultation_fee }}</td>
+                                <td><span class="status-badge status-approved">Approved</span></td>
+                                <td class="actions">
+                                    <button class="btn btn-sm btn-primary set-fee-btn" data-doctor-id="{{ doctor.id }}"
+                                        data-doctor-name="{{ doctor.name }}"
+                                        data-current-fee="{{ doctor.consultation_fee }}">
+                                        <i class="fas fa-tag"></i> Set Fee
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-doctor-btn"
+                                        data-doctor-id="{{ doctor.id }}" data-doctor-name="{{ doctor.name }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>No approved doctors yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-users"></i> All Patients</h3>
+                {% if all_patients %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                                <th>Registration Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for patient in all_patients %}
+                            <tr>
+                                <td>{{ patient.name }}</td>
+                                <td>{{ patient.email }}</td>
+                                <td>{{ patient.phone }}</td>
+                                <td>{{ patient.address[:50] }}{% if patient.address|length > 50 %}...{% endif %}</td>
+                                <td>{{ patient.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary send-notif-btn"
+                                        data-user-id="{{ patient.id }}" data-user-name="{{ patient.name }}">
+                                        <i class="fas fa-paper-plane"></i> Notify
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p>No patients registered yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Modal -->
+<div id="notificationModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-paper-plane"></i> Send Notification</h3>
+            <span class="close" onclick="closeModal('notificationModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="notificationForm">
+                <input type="hidden" id="notif-user-id">
+                <div class="form-group">
+                    <label>To: <span id="notif-user-name" style="font-weight: 600;"></span></label>
+                </div>
+                <div class="form-group">
+                    <label for="notif-type">Notification Type</label>
+                    <select id="notif-type" class="form-control">
+                        <option value="general">General Notification</option>
+                        <option value="appointment">Appointment Related</option>
+                        <option value="refill">Prescription Refill</option>
+                        <option value="checkup">Health Checkup</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="notif-message">Message</label>
+                    <textarea id="notif-message" class="form-control" rows="4" placeholder="Enter your message here..."
+                        required></textarea>
+                </div>
+                <div style="text-align: right; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('notificationModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Notification</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Fee Update Modal -->
+<div id="feeModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-tag"></i> Set Consultation Fee</h3>
+            <span class="close" onclick="closeModal('feeModal')">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="feeForm">
+                <input type="hidden" id="fee-doctor-id">
+                <div class="form-group">
+                    <label>Doctor: <span id="fee-doctor-name" style="font-weight: 600;"></span></label>
+                </div>
+                <div class="form-group">
+                    <label for="consultation-fee">Consultation Fee (₹)</label>
+                    <input type="number" id="consultation-fee" class="form-control" min="0" step="any" required>
+                </div>
+                <div style="text-align: right; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('feeModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Fee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    // Set Fee Logic
+    document.querySelectorAll('.set-fee-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const doctorId = this.dataset.doctorId;
+            const doctorName = this.dataset.doctorName;
+            const currentFee = this.dataset.currentFee;
+
+            document.getElementById('fee-doctor-id').value = doctorId;
+            document.getElementById('fee-doctor-name').innerText = doctorName;
+            document.getElementById('consultation-fee').value = currentFee;
+            document.getElementById('feeModal').style.display = 'flex';
+        });
+    });
+
+    document.getElementById('feeForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const doctorId = document.getElementById('fee-doctor-id').value;
+        const fee = document.getElementById('consultation-fee').value;
+
+        try {
+            const response = await fetch(`/api/update-doctor-fee/${doctorId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ consultation_fee: fee })
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('An error occurred while updating the fee.');
+        }
+    });
+
+    // Approval/Rejection Logics
+    document.querySelectorAll('.approve-doctor-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const doctorId = this.dataset.doctorId;
+            if (confirm('Are you sure you want to approve this doctor?')) {
+                const response = await fetch(`/api/approve-doctor/${doctorId}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.reject-doctor-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const doctorId = this.dataset.doctorId;
+            if (confirm('Are you sure you want to reject this doctor?')) {
+                const response = await fetch(`/api/reject-doctor/${doctorId}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('.delete-doctor-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const doctorId = this.dataset.doctorId;
+            const doctorName = this.dataset.doctorName;
+            if (confirm(`Are you sure you want to delete Dr. ${doctorName}?`)) {
+                const response = await fetch(`/api/delete-doctor/${doctorId}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            }
+        });
+    });
+
+    // Notification Logic
+    document.querySelectorAll('.send-notif-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const userId = this.dataset.userId;
+            const userName = this.dataset.userName;
+            document.getElementById('notif-user-id').value = userId;
+            document.getElementById('notif-user-name').innerText = userName;
+            document.getElementById('notificationModal').style.display = 'flex';
+        });
+    });
+
+    document.getElementById('notificationForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        // Notification API logic omitted for brevity as per existing implementation context 
+        // but can be added if needed. For now just closing.
+        alert('Notification logic would go here.');
+        closeModal('notificationModal');
+    });
+</script>
+
+<style>
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .status-approved {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}

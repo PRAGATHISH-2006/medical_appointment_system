@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+
+{% block title %}Current Doctors - MedAppoint{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <h1><i class="fas fa-user-md"></i> Current Doctors</h1>
+        <p>Welcome, {{ name }}! Here are your current treating doctors.</p>
+
+        {% if current_doctors %}
+        <div class="doctor-grid">
+            {% for cd in current_doctors %}
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                    <div>
+                        <h3>Dr. {{ cd.doctor.name }}</h3>
+                        <div class="specialization">{{ cd.doctor.specialization }}</div>
+                        <p><i class="fas fa-graduation-cap"></i> {{ cd.doctor.qualification }}</p>
+                        <p><i class="fas fa-briefcase"></i> {{ cd.doctor.experience }} years experience</p>
+                        <p><i class="fas fa-phone"></i> {{ cd.doctor.phone }}</p>
+                        <p><i class="fas fa-envelope"></i> {{ cd.doctor.email }}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> {{ cd.doctor.address }}</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-danger btn-sm remove-doctor-btn" data-current-doctor-id="{{ cd.id }}">
+                            <i class="fas fa-user-times"></i> Remove
+                        </button>
+                    </div>
+                </div>
+
+                {% if cd.prescriptions %}
+                <div style="margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+                    <h4><i class="fas fa-prescription"></i> Recent Prescriptions</h4>
+                    <div class="table-container" style="margin-top: 1rem;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Medicines</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prescription in cd.prescriptions[:3] %}
+                                <tr>
+                                    <td>{{ prescription.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ prescription.medicines[:50] }}{% if prescription.medicines|length > 50
+                                        %}...{% endif %}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-prescription-btn"
+                                            data-prescription-id="{{ prescription.id }}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                        <button class="btn btn-sm btn-secondary"
+                                            onclick="downloadPrescription({{ prescription.id }})">
+                                            <i class="fas fa-download"></i> Download
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if cd.prescriptions|length > 3 %}
+                    <p style="text-align: center; margin-top: 1rem;">
+                        <a href="#" style="color: #3498db; text-decoration: none;">
+                            View all {{ cd.prescriptions|length }} prescriptions →
+                        </a>
+                    </p>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div style="margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+                    <p style="color: #666; text-align: center;">
+                        <i class="fas fa-prescription fa-2x"
+                            style="color: #ddd; margin-bottom: 1rem; display: block;"></i>
+                        No prescriptions yet from this doctor.
+                    </p>
+                </div>
+                {% endif %}
+
+                <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <button class="btn btn-primary"
+                        onclick="location.href='{{ url_for('appointment') }}?doctor_id={{ cd.doctor.id }}'">
+                        <i class="fas fa-calendar-plus"></i> Book Appointment
+                    </button>
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-comment-medical"></i> Send Message
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+            <div style="text-align: center; padding: 3rem;">
+                <i class="fas fa-user-md fa-4x" style="color: #ddd; margin-bottom: 2rem;"></i>
+                <h3>No Current Doctors</h3>
+                <p style="color: #666; margin-bottom: 2rem;">
+                    You don't have any current doctors assigned yet.<br>
+                    Book an appointment to get started with your healthcare journey.
+                </p>
+                <a href="{{ url_for('appointment') }}" class="btn btn-primary">
+                    <i class="fas fa-calendar-plus"></i> Book Your First Appointment
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if current_doctors %}
+        <div class="card mt-4">
+            <h3><i class="fas fa-info-circle"></i> How to Manage Your Doctors</h3>
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <div>
+                    <h4><i class="fas fa-comments" style="color: #3498db;"></i> Communication</h4>
+                    <p style="color: #666;">Contact your doctors through the system for any queries or follow-ups.</p>
+                </div>
+                <div>
+                    <h4><i class="fas fa-calendar-check" style="color: #2ecc71;"></i> Appointments</h4>
+                    <p style="color: #666;">Book follow-up appointments with your current doctors easily.</p>
+                </div>
+                <div>
+                    <h4><i class="fas fa-prescription" style="color: #e74c3c;"></i> Prescriptions</h4>
+                    <p style="color: #666;">Access and download all your prescriptions from your doctors.</p>
+                </div>
+                <div>
+                    <h4><i class="fas fa-user-times" style="color: #f39c12;"></i> Manage Doctors</h4>
+                    <p style="color: #666;">You can remove doctors from your list if no longer needed.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

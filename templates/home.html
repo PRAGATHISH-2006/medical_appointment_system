@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+
+{% block title %}Home - Medical Care{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>Medical Care</h1>
+        <p>Book appointments with doctors, manage prescriptions, and access medical reports all in one secure platform.</p>
+        <div class="cta-buttons">
+            <a href="{{ url_for('register') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Get Started
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-secondary">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="features">
+    <div class="container">
+        <h2 class="text-center mb-4">Our Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-user-md fa-3x mb-3" style="color: #3498db;"></i>
+                <h3>For Patients</h3>
+                <p>Book appointments, view prescriptions, access medical reports, and manage your healthcare all in one place.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-stethoscope fa-3x mb-3" style="color: #2ecc71;"></i>
+                <h3>For Doctors</h3>
+                <p>Manage appointments, view patient history, write prescriptions, and provide remote consultations.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-shield-alt fa-3x mb-3" style="color: #e74c3c;"></i>
+                <h3>Secure & Reliable</h3>
+                <p>Your medical data is protected with advanced security measures and encrypted communications.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h3 class="text-center">How It Works</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin-top: 2rem;">
+            <div style="text-align: center;">
+                <div style="background: #3498db; color: white; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; margin: 0 auto 1rem; font-weight: bold;">1</div>
+                <h4>Register Account</h4>
+                <p>Create your account as Patient, Doctor, or wait for Admin approval.</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="background: #3498db; color: white; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; margin: 0 auto 1rem; font-weight: bold;">2</div>
+                <h4>Book Appointment</h4>
+                <p>Patients can browse doctors and book appointments online.</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="background: #3498db; color: white; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; margin: 0 auto 1rem; font-weight: bold;">3</div>
+                <h4>Get Treatment</h4>
+                <p>Doctors approve appointments and provide prescriptions.</p>
+            </div>
+            <div style="text-align: center;">
+                <div style="background: #3498db; color: white; width: 50px; height: 50px; line-height: 50px; border-radius: 50%; margin: 0 auto 1rem; font-weight: bold;">4</div>
+                <h4>Manage Health</h4>
+                <p>Access medical reports and prescriptions anytime.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

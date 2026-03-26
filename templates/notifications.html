@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+
+{% block title %}Notifications - MedAppoint{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <h1><i class="fas fa-bell"></i> Your Notifications</h1>
+        <p>Stay updated with your health reminders and appointment alerts.</p>
+
+        <div class="card">
+            {% if notifications %}
+            <div class="notification-list">
+                {% for notif in notifications %}
+                <div id="notif-{{ notif.id }}"
+                    class="card mb-3 notification-item {% if notif.is_read %}read{% else %}unread{% endif %}"
+                    style="border-left: 5px solid {% if notif.type == 'appointment' %}#3498db{% elif notif.type == 'refill' %}#e67e22{% else %}#2ecc71{% endif %}; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h4 style="margin: 0 0 5px 0;">
+                                {% if notif.type == 'appointment' %}
+                                <i class="fas fa-calendar-check text-primary"></i> Appointment Reminder
+                                {% elif notif.type == 'refill' %}
+                                <i class="fas fa-pills text-warning"></i> Prescription Refill
+                                {% elif notif.type == 'checkup' %}
+                                <i class="fas fa-user-check text-success"></i> Health Checkup
+                                {% else %}
+                                <i class="fas fa-info-circle text-info"></i> System Notification
+                                {% endif %}
+                            </h4>
+                            <p style="margin: 0; color: #333;">{{ notif.message }}</p>
+                            <small style="color: #666;">{{ notif.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        {% if not notif.is_read %}
+                        <button class="btn btn-sm btn-outline-secondary mark-read-btn" data-notif-id="{{ notif.id }}">
+                            Mark as Read
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 3rem; color: #666;">
+                <i class="fas fa-bell-slash fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
+                <p>No notifications at the moment. You're all caught up!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .notification-item.unread {
+        background-color: #f0f7ff;
+    }
+
+    .notification-item.read {
+        opacity: 0.7;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem;
+    }
+
+    .text-primary {
+        color: #3498db;
+    }
+
+    .text-warning {
+        color: #e67e22;
+    }
+
+    .text-success {
+        color: #2ecc71;
+    }
+
+    .text-info {
+        color: #3498db;
+    }
+</style>
+{% endblock %}

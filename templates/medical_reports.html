@@ -1,0 +1,268 @@
+{% extends "layout.html" %}
+
+{% block title %}Medical Records - MedAppoint{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <h1><i class="fas fa-file-medical"></i> Medical Records</h1>
+        <p>Welcome, {{ name }}! Organize and share your medical records securely.</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+            <div class="card">
+                <h3><i class="fas fa-file-medical-alt"></i> Your Medical Records</h3>
+
+                {% if reports %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Record Name</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                            <tr id="report-{{ report.id }}">
+                                <td>
+                                    <strong>{{ report.report_name }}</strong>
+                                    {% if report.description %}
+                                    <br><small style="color: #666;">{{ report.description }}</small>
+                                    {% endif %}
+                                </td>
+                                <td><span class="status-badge status-approved">{{ report.category }}</span></td>
+                                <td>{{ report.report_date }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="{{ url_for('static', filename='uploads/' + report.file_path) }}"
+                                            target="_blank" class="btn btn-sm btn-outline-primary" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-info edit-record-btn"
+                                            data-id="{{ report.id }}" data-name="{{ report.report_name }}"
+                                            data-category="{{ report.category }}" data-date="{{ report.report_date }}"
+                                            data-description="{{ report.description }}" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success"
+                                            onclick="openShareModal({{ report.id }}, '{{ report.report_name }}')"
+                                            title="Share">
+                                            <i class="fas fa-share-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                            onclick="deleteReport({{ report.id }})" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 3rem; color: #666;">
+                    <i class="fas fa-folder-open fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>No medical records found. Start by uploading one!</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-upload"></i> Upload New Record</h3>
+                <form action="{{ url_for('upload_medical_report') }}" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="report_name">Record Name</label>
+                        <input type="text" id="report_name" name="report_name" class="form-control"
+                            placeholder="e.g. Blood Test Oct 2024" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category" class="form-control" required>
+                            <option value="Prescription">Prescription</option>
+                            <option value="Test Report">Test Report</option>
+                            <option value="Diagnosis">Diagnosis</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="report_date">Record Date</label>
+                        <input type="date" id="report_date" name="report_date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="doctor_name">Doctor/Laboratory (Optional)</label>
+                        <input type="text" id="doctor_name" name="doctor_name" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Notes (Optional)</label>
+                        <textarea id="description" name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="report_file">File (PDF/Images)</label>
+                        <input type="file" id="report_file" name="report_file" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload Record
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal"
+    style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div class="card" style="width: 400px; margin: 100px auto; padding: 20px;">
+        <h3>Share Record</h3>
+        <p id="shareRecordName">Record: <span></span></p>
+        <div class="form-group">
+            <label>Select Doctor to Share With</label>
+            <select id="shareDoctorSelect" class="form-control">
+                <option value="">Choose a doctor...</option>
+                {% for doctor in doctors %}
+                <option value="{{ doctor.id }}">Dr. {{ doctor.name }} ({{ doctor.specialization }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-secondary flex-1"
+                onclick="document.getElementById('shareModal').style.display='none'">Cancel</button>
+            <button class="btn btn-primary flex-1" onclick="submitShare()">Share Access</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal"
+    style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div class="card" style="width: 450px; margin: 100px auto; padding: 20px;">
+        <h3>Edit Record Details</h3>
+        <div class="form-group">
+            <label>Record Name</label>
+            <input type="text" id="editReportName" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select id="editCategory" class="form-control">
+                <option value="Prescription">Prescription</option>
+                <option value="Test Report">Test Report</option>
+                <option value="Diagnosis">Diagnosis</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Record Date</label>
+            <input type="date" id="editReportDate" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="editDescription" class="form-control" rows="3"></textarea>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn btn-secondary flex-1"
+                onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+            <button class="btn btn-primary flex-1" onclick="submitEdit()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentReportId = null;
+
+    function openShareModal(reportId, reportName) {
+        currentReportId = reportId;
+        document.querySelector('#shareRecordName span').innerText = reportName;
+        document.getElementById('shareModal').style.display = 'block';
+    }
+
+    async function submitShare() {
+        const doctorId = document.getElementById('shareDoctorSelect').value;
+        if (!doctorId) {
+            alert('Please select a doctor');
+            return;
+        }
+
+        try {
+            const response = await fetch('/patient/medical-reports/share', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    report_id: currentReportId,
+                    doctor_id: doctorId
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert(data.message);
+                document.getElementById('shareModal').style.display = 'none';
+            } else {
+                alert(data.error);
+            }
+        } catch (error) {
+            alert('Error sharing record');
+        }
+    }
+
+    async function deleteReport(reportId) {
+        if (!confirm('Are you sure you want to delete this record? This action will be logged in your audit trail.')) return;
+
+        try {
+            const response = await fetch(`/patient/medical-reports/delete/${reportId}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById(`report-${reportId}`).remove();
+            } else {
+                alert(data.error);
+            }
+        } catch (error) {
+            alert('Error deleting record');
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.edit-record-btn')) {
+            const btn = e.target.closest('.edit-record-btn');
+            currentReportId = btn.dataset.id;
+            document.getElementById('editReportName').value = btn.dataset.name;
+            document.getElementById('editCategory').value = btn.dataset.category;
+            document.getElementById('editReportDate').value = btn.dataset.date;
+            document.getElementById('editDescription').value = btn.dataset.description;
+            document.getElementById('editModal').style.display = 'block';
+        }
+    });
+
+    async function submitEdit() {
+        const payload = {
+            report_name: document.getElementById('editReportName').value,
+            category: document.getElementById('editCategory').value,
+            report_date: document.getElementById('editReportDate').value,
+            description: document.getElementById('editDescription').value
+        };
+
+        try {
+            const response = await fetch(`/patient/medical-reports/edit/${currentReportId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.error);
+            }
+        } catch (error) {
+            alert('Error updating record');
+        }
+    }
+
+    // Set default date to today
+    document.getElementById('report_date').valueAsDate = new Date();
+</script>
+{% endblock %}
