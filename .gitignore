@@ -1,0 +1,22 @@
+# Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database
+*.sqlite3
+instance/
+
+# IDEs
+.vscode/
+.idea/
+
+# Old Versions (from previous rewrites)
+old_versions/

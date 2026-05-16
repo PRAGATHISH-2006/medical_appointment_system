@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <h2>My Dashboard</h2>
+        <p>Welcome back, {{ current_user.name }}!</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">My Appointments</h5>
+            </div>
+            <div class="card-body">
+                {% if appointments %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Doctor</th>
+                                <th>Specialization</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appt in appointments %}
+                            <tr>
+                                <td>Dr. {{ appt.doctor.name }}</td>
+                                <td>{{ appt.doctor.specialization }}</td>
+                                <td>{{ appt.date }}</td>
+                                <td>{{ appt.time }}</td>
+                                <td>
+                                    <span class="badge {% if appt.status == 'Confirmed' %}bg-success{% elif appt.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ appt.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">You have no booked appointments.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary mt-3">Book an Appointment</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

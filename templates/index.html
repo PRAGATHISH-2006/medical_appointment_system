@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center mb-5">
+        <h1 class="display-4">Welcome to MediCare</h1>
+        <p class="lead">Book your medical appointments easily and quickly.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Available Doctors</h2>
+        <div class="row">
+            {% for doctor in doctors %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Dr. {{ doctor.name }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ doctor.specialization }}</h6>
+                        <p class="card-text">
+                            <strong>Experience:</strong> {{ doctor.experience }}<br>
+                            <strong>Fee:</strong> ${{ doctor.fee }}
+                        </p>
+                        <a href="{{ url_for('book_appointment', doctor_id=doctor.id) }}" class="btn btn-primary">Book Appointment</a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <p class="text-muted">No doctors available at the moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
