@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Home - Medical Care', ~{})}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div th:replace="~{layout :: alerts}"></div>
+
+    <main>
+        <div class="hero">
+            <div class="container">
+                <h1>Medical Care</h1>
+                <p>Book appointments with doctors, manage prescriptions, and access medical reports all in one secure platform.</p>
+                <div class="cta-buttons">
+                    <a th:href="@{/register}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Get Started
+                    </a>
+                    <a th:href="@{/login}" class="btn btn-secondary">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="features animate-fade">
+            <div class="container">
+                <h2 class="text-center mb-4">Our Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="icon-box">
+                            <i class="fas fa-user-md"></i>
+                        </div>
+                        <h3>For Patients</h3>
+                        <p>Book appointments, view prescriptions, access medical reports, and manage your healthcare all in one place.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon-box success">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                        <h3>For Doctors</h3>
+                        <p>Manage appointments, view patient history, write prescriptions, and provide remote consultations.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="icon-box danger">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Secure & Reliable</h3>
+                        <p>Your medical data is protected with advanced security measures and encrypted communications.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container animate-fade" style="margin-top: 4rem; margin-bottom: 4rem;">
+            <div class="card">
+                <h3 class="text-center">How It Works</h3>
+                <div class="steps-grid">
+                    <div class="step-item">
+                        <div class="step-number">1</div>
+                        <h4>Register Account</h4>
+                        <p>Create your account as Patient, Doctor, or wait for Admin approval.</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <h4>Book Appointment</h4>
+                        <p>Patients can browse doctors and book appointments online.</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <h4>Get Treatment</h4>
+                        <p>Doctors approve appointments and provide prescriptions.</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">4</div>
+                        <h4>Manage Health</h4>
+                        <p>Access medical reports and prescriptions anytime.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+    <script th:replace="~{layout :: scripts}"></script>
+</body>
+
+</html>

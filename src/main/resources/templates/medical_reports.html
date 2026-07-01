@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Medical Reports - Medical Care', ~{})}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div th:replace="~{layout :: alerts}"></div>
+
+    <main>
+        <div class="dashboard animate-fade">
+            <div class="container">
+                <header class="mb-4">
+                    <h1><i class="fas fa-file-medical"></i> Medical Records</h1>
+                    <p>Securely organize, analyze, and share your health documents.</p>
+                </header>
+
+                <div class="grid-2-1">
+                    <div class="card">
+                        <h3 class="mb-4"><i class="fas fa-folder-open"></i> Your Documents</h3>
+
+                        <th:block th:if="${not #lists.isEmpty(reports)}">
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Record</th>
+                                            <th>Category</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="report : ${reports}" th:id="'report-' + ${report.id}">
+                                            <td>
+                                                <strong th:text="${report.reportName}">Record Name</strong><br>
+                                                <small class="text-muted" th:text="${report.reportDate}">Date</small>
+                                            </td>
+                                            <td><span class="badge badge-info" th:text="${report.category}">Category</span></td>
+                                            <td>
+                                                <div class="d-flex gap-1">
+                                                    <!-- View Document -->
+                                                    <a th:href="@{'/uploads/' + ${report.filePath}}" target="_blank" class="btn btn-sm btn-secondary" title="View Document">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <!-- AI Summarizer Agent Trigger Button -->
+                                                    <button class="btn btn-sm btn-warning ai-summarize-btn" th:onclick="'summarizeReport(' + ${report.id} + ')'" title="AI Report Summary" style="background-color: #9b59b6; border-color: #9b59b6; color: white;">
+                                                        <i class="fas fa-magic"></i>
+                                                    </button>
+                                                    <!-- Edit Details -->
+                                                    <button class="btn btn-sm btn-secondary edit-record-btn"
+                                                            th:data-id="${report.id}" th:data-name="${report.reportName}"
+                                                            th:data-category="${report.category}" th:data-date="${report.reportDate}"
+                                                            th:data-description="${report.description}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <!-- Share with Doctor -->
+                                                    <button class="btn btn-sm btn-primary" th:onclick="openShareModal([[${report.id}]], [[${report.reportName}]])" title="Share with Doctor">
+                                                        <i class="fas fa-share-alt"></i>
+                                                    </button>
+                                                    <!-- Delete -->
+                                                    <button class="btn btn-sm btn-danger" th:onclick="'deleteReport(' + ${report.id} + ')'" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </th:block>
+                        <th:block th:if="${#lists.isEmpty(reports)}">
+                            <div class="text-center py-5">
+                                <i class="fas fa-upload fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No records found. Upload your first one!</p>
+                            </div>
+                        </th:block>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="mb-4"><i class="fas fa-cloud-upload-alt"></i> Upload New</h3>
+                        <form th:action="@{/patient/medical-reports/upload}" method="POST" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="report_name">Document Name</label>
+                                <input type="text" id="report_name" name="report_name" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <select id="category" name="category" class="form-control" required>
+                                    <option value="Prescription">Prescription</option>
+                                    <option value="Test Report">Test Report</option>
+                                    <option value="Diagnosis">Diagnosis</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="report_date">Date</label>
+                                <input type="date" id="report_date" name="report_date" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Doctor Notes / Description</label>
+                                <textarea id="description" name="description" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="report_file">File (PDF/Image)</label>
+                                <input type="file" id="report_file" name="report_file" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mt-3">Upload Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Share Record</h3>
+                <span class="close" onclick="closeModal('shareModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="shareRecordName" class="mb-3">Sharing: <strong><span></span></strong></p>
+                <div class="form-group">
+                    <label>Select Doctor</label>
+                    <select id="shareDoctorSelect" class="form-control">
+                        <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:text="'Dr. ' + ${doctor.name} + ' (' + ${doctor.specialization} + ')'">Doctor name</option>
+                    </select>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-primary w-100" onclick="submitShare()">Grant Access</button>
+                    <button class="btn btn-secondary w-100" onclick="closeModal('shareModal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Details</h3>
+                <span class="close" onclick="closeModal('editModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editReportName" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="editCategory" class="form-control">
+                        <option value="Prescription">Prescription</option>
+                        <option value="Test Report">Test Report</option>
+                        <option value="Diagnosis">Diagnosis</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="editReportDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editDescription" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-primary w-100" onclick="submitEdit()">Save</button>
+                    <button class="btn btn-secondary w-100" onclick="closeModal('editModal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Summary Modal -->
+    <div id="aiSummaryModal" class="modal">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header" style="background-color: #9b59b6; color: white;">
+                <h3><i class="fas fa-magic"></i> AI Report Summarizer Agent</h3>
+                <span class="close" onclick="closeModal('aiSummaryModal')" style="color: white;">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="ai_summary_loading" class="text-center py-4">
+                    <i class="fas fa-circle-notch fa-spin fa-2x text-primary mb-3" style="color: #9b59b6 !important;"></i>
+                    <p>Synthesizing metrics and physician notes...</p>
+                </div>
+                <div id="ai_summary_content" style="display: none; text-align: left; line-height: 1.6;">
+                    <div class="summary-box p-3 bg-light rounded" style="border-left: 5px solid #9b59b6; white-space: pre-wrap; font-family: inherit;">
+                        <!-- AI text injected here -->
+                    </div>
+                </div>
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary" onclick="closeModal('aiSummaryModal')" style="background-color: #9b59b6; border-color: #9b59b6; width: 150px;">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+    <script th:replace="~{layout :: scripts}"></script>
+    <script>
+        let currentId = null;
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function openShareModal(id, name) {
+            currentId = id;
+            document.querySelector('#shareRecordName strong span').innerText = name;
+            document.getElementById('shareModal').style.display = 'flex';
+        }
+
+        async function submitShare() {
+            const docId = document.getElementById('shareDoctorSelect').value;
+            const resp = await fetch('/patient/medical-reports/share', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ report_id: currentId, doctor_id: docId })
+            });
+            const data = await resp.json();
+            if (data.success) { 
+                alert(data.message); 
+                closeModal('shareModal'); 
+            } else {
+                alert(data.error);
+            }
+        }
+
+        async function deleteReport(id) {
+            if (!confirm('Delete this record?')) return;
+            const resp = await fetch(`/patient/medical-reports/delete/${id}`, { method: 'POST' });
+            const data = await resp.json();
+            if (data.success) {
+                document.getElementById(`report-${id}`).remove();
+            } else {
+                alert(data.error);
+            }
+        }
+
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.edit-record-btn');
+            if (btn) {
+                currentId = btn.dataset.id;
+                document.getElementById('editReportName').value = btn.dataset.name;
+                document.getElementById('editCategory').value = btn.dataset.category;
+                document.getElementById('editReportDate').value = btn.dataset.date;
+                document.getElementById('editDescription').value = btn.dataset.description || '';
+                document.getElementById('editModal').style.display = 'flex';
+            }
+        });
+
+        async function submitEdit() {
+            const payload = {
+                report_name: document.getElementById('editReportName').value,
+                category: document.getElementById('editCategory').value,
+                report_date: document.getElementById('editReportDate').value,
+                description: document.getElementById('editDescription').value
+            };
+            const resp = await fetch(`/patient/medical-reports/edit/${currentId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if ((await resp.json()).success) {
+                location.reload();
+            }
+        }
+
+        async function summarizeReport(id) {
+            document.getElementById('aiSummaryModal').style.display = 'flex';
+            document.getElementById('ai_summary_loading').style.display = 'block';
+            document.getElementById('ai_summary_content').style.display = 'none';
+
+            try {
+                const resp = await fetch(`/api/ai/summarize-report/${id}`);
+                const data = await resp.json();
+                if (data.success) {
+                    // Simple markdown bold formatting replacement for rendering
+                    let summaryText = data.summary
+                        .replace(/### (.*)/g, '<h4 class="text-primary">$1</h4>')
+                        .replace(/#### (.*)/g, '<h5>$1</h5>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    
+                    document.querySelector('.summary-box').innerHTML = summaryText;
+                    document.getElementById('ai_summary_loading').style.display = 'none';
+                    document.getElementById('ai_summary_content').style.display = 'block';
+                } else {
+                    document.querySelector('.summary-box').innerText = "Failed to load summary: " + data.error;
+                    document.getElementById('ai_summary_loading').style.display = 'none';
+                    document.getElementById('ai_summary_content').style.display = 'block';
+                }
+            } catch (err) {
+                document.querySelector('.summary-box').innerText = "Network error while synthesizing report.";
+                document.getElementById('ai_summary_loading').style.display = 'none';
+                document.getElementById('ai_summary_content').style.display = 'block';
+            }
+        }
+
+        document.getElementById('report_date').valueAsDate = new Date();
+    </script>
+</body>
+
+</html>

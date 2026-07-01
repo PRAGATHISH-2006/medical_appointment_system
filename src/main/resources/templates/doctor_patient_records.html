@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Patient Records - MedAppoint', ~{})}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div th:replace="~{layout :: alerts}"></div>
+
+    <main>
+        <div class="dashboard">
+            <div class="container" style="margin-bottom: 4rem;">
+                <h1><i class="fas fa-folder-open"></i> Shared Records: <span th:text="${patient.name}">Patient Name</span></h1>
+                <p>Viewing medical records shared with you by the patient.</p>
+
+                <div class="card">
+                    <h3><i class="fas fa-file-medical-alt"></i> Shared Medical Records</h3>
+
+                    <th:block th:if="${not #lists.isEmpty(reports)}">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Record Name</th>
+                                        <th>Category</th>
+                                        <th>Date</th>
+                                        <th>Description</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="report : ${reports}">
+                                        <td><strong th:text="${report.reportName}">Record Name</strong></td>
+                                        <td><span class="status-badge status-approved" th:text="${report.category}" style="background-color: #ebf9eb; color: #27ae60; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; font-weight: 500;">Category</span></td>
+                                        <td th:text="${report.reportDate}">Date</td>
+                                        <td th:text="${report.description}">Description</td>
+                                        <td>
+                                            <a th:href="@{'/uploads/' + ${report.filePath}}" target="_blank" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-eye"></i> View Document
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </th:block>
+                    <th:block th:if="${#lists.isEmpty(reports)}">
+                        <div style="text-align: center; padding: 3rem; color: #666;">
+                            <i class="fas fa-lock fa-3x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>No records have been shared with you for this patient yet.</p>
+                        </div>
+                    </th:block>
+
+                    <a th:href="@{/doctor/dashboard}" class="btn btn-secondary mt-3">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+    <script th:replace="~{layout :: scripts}"></script>
+</body>
+
+</html>

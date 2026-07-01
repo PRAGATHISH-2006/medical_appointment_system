@@ -1,0 +1,35 @@
+# Maven build output
+target/
+*.jar
+*.war
+*.ear
+
+# H2 local data file
+data/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.classpath
+*.project
+.settings/
+
+# Spring Boot DevTools restart file
+.spring-boot-devtools.properties
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploaded files (user-generated, not tracked)
+src/main/resources/static/uploads/*
+!src/main/resources/static/uploads/.gitkeep
+
+# Old Python artifacts (if any remain)
+venv/
+__pycache__/
+*.pyc
+*.pyo
+instance/
+*.db

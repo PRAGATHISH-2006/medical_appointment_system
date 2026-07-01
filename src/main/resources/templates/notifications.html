@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Notifications - Medicalcare', ~{})}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div th:replace="~{layout :: alerts}"></div>
+
+    <main>
+        <div class="dashboard animate-fade">
+            <div class="container" style="max-width: 800px;">
+                <header class="mb-4">
+                    <h1><i class="fas fa-bell"></i> Notifications Hub</h1>
+                    <p>Track medication reminders, checkups, and doctor bookings.</p>
+                </header>
+
+                <div class="card">
+                    <th:block th:if="${not #lists.isEmpty(notifications)}">
+                        <ul class="list-group">
+                            <li class="list-item" th:each="notif : ${notifications}" th:id="'notif-' + ${notif.id}" th:classappend="${notif.read ? 'read' : 'unread'}" style="padding: 1.2rem; border-bottom: 1px solid var(--border); transition: background-color 0.2s;">
+                                <div class="list-item-content" style="flex-grow: 1;">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge" th:classappend="${notif.type == 'appointment' ? 'badge-primary' : (notif.type == 'refill' ? 'badge-warning' : (notif.type == 'checkup' ? 'badge-danger' : 'badge-info'))}" th:text="${#strings.toUpperCase(notif.type)}">TYPE</span>
+                                        <small class="text-muted" th:text="${#temporals.format(notif.createdAt, 'yyyy-MM-dd HH:mm')}">Date & Time</small>
+                                    </div>
+                                    <p class="mb-0" th:text="${notif.message}" style="font-size: 1rem; color: var(--text-dark);">Notification message</p>
+                                </div>
+                                <div th:if="${!notif.read}" class="list-item-actions">
+                                    <button class="btn btn-sm btn-secondary mark-read-btn" th:data-notif-id="${notif.id}">
+                                        <i class="fas fa-check"></i> Read
+                                    </button>
+                                </div>
+                            </li>
+                        </ul>
+                    </th:block>
+                    <th:block th:if="${#lists.isEmpty(notifications)}">
+                        <div class="text-center py-4 text-muted">
+                            <i class="far fa-bell-slash fa-3x mb-3 text-light-gray"></i>
+                            <p>You have no notifications yet.</p>
+                        </div>
+                    </th:block>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+    <script th:replace="~{layout :: scripts}"></script>
+    <style>
+        .unread { background-color: #f7fbfe; border-left: 4px solid var(--primary); }
+        .read { opacity: 0.8; }
+        .badge-primary { background: #3498db !important; }
+        .badge-warning { background: #f1c40f !important; }
+        .badge-danger { background: #e74c3c !important; }
+        .badge-info { background: #95a5a6 !important; }
+    </style>
+</body>
+
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Book Appointment - Medical Care', ~{})}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div th:replace="~{layout :: alerts}"></div>
+
+    <main>
+        <div class="dashboard animate-fade">
+            <div class="container">
+                <header class="mb-4">
+                    <h1><i class="fas fa-calendar-plus"></i> Book Appointment</h1>
+                    <p>Welcome, <strong><span th:text="${name}">Patient Name</span></strong>! Book an appointment with our specialist doctors.</p>
+                </header>
+
+                <div class="grid-2-1">
+                    <div class="card">
+                        <h3 class="mb-4"><i class="fas fa-search"></i> Available Doctors</h3>
+
+                        <th:block th:if="${not #lists.isEmpty(doctors)}">
+                            <div class="d-grid gap-3">
+                                <div class="card border-hover" th:each="doctor : ${doctors}" style="margin-bottom: 1rem; padding: 1.2rem; transition: all 0.2s;">
+                                    <div class="d-flex justify-content-between align-items-center" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <h4 class="mb-1" th:text="'Dr. ' + ${doctor.name}" style="margin: 0 0 0.3rem 0;">Dr. Doctor Name</h4>
+                                            <span class="badge badge-info mb-2" th:text="${doctor.specialization}" style="margin-bottom: 0.5rem; display: inline-block;">Specialization</span>
+                                            <div class="text-muted small">
+                                                <p class="mb-1" style="margin: 0.1rem 0;"><i class="fas fa-graduation-cap"></i> <span th:text="${doctor.qualification}">Qualification</span></p>
+                                                <p class="mb-1" style="margin: 0.1rem 0;"><i class="fas fa-briefcase"></i> <span th:text="${doctor.experience}">5</span> years experience</p>
+                                                <p class="mb-1 text-primary" style="margin: 0.1rem 0; font-weight: bold; color: var(--primary);">
+                                                    <i class="fas fa-money-bill-wave"></i> Fee: ₹<span th:text="${doctor.consultationFee}">0.0</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-primary btn-book" th:data-id="${doctor.id}"
+                                            th:data-name="${doctor.name}" th:data-fee="${doctor.consultationFee}">
+                                            Select
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                        <th:block th:if="${#lists.isEmpty(doctors)}">
+                            <p class="text-muted">No doctors available at the moment.</p>
+                        </th:block>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="mb-4"><i class="fas fa-edit"></i> Booking Form</h3>
+
+                        <form id="appointmentForm" th:action="@{/patient/appointment}" method="POST" onsubmit="handleAppointmentSubmit(event)">
+                            <div class="form-group">
+                                <label for="doctor_id">Doctor</label>
+                                <select id="doctor_id" name="doctor_id" class="form-control" required onchange="handleDoctorChange()">
+                                    <option value="">Choose your specialist</option>
+                                    <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:data-fee="${doctor.consultationFee}" th:text="'Dr. ' + ${doctor.name}"></option>
+                                </select>
+                            </div>
+
+                            <div class="grid-2-1 gap-1" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="form-group">
+                                    <label for="date">Date</label>
+                                    <input type="date" id="date" name="date" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="time">Time</label>
+                                    <input type="time" id="time" name="time" class="form-control" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="symptoms">Symptoms</label>
+                                <textarea id="symptoms" name="symptoms" class="form-control" rows="3" required placeholder="Describe how you're feeling..."></textarea>
+                            </div>
+
+                            <!-- Hidden inputs for payment processing -->
+                            <input type="hidden" id="payment_status" name="payment_status" value="pending">
+                            <input type="hidden" id="payment_method_input" name="payment_method" value="offline">
+
+                            <div id="payment_section" class="mt-4 pt-4 border-top" style="display:none; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1.5rem;">
+                                <h4 class="mb-3">Payment Confirmation</h4>
+                                <p class="mb-3">Consultation Fee: <strong class="text-primary">₹<span id="display_fee">0</span></strong></p>
+
+                                <div class="form-group">
+                                    <label class="mb-2">Payment Option</label>
+                                    <div class="d-flex gap-3" style="display: flex; gap: 1.5rem;">
+                                        <label class="d-flex align-items-center gap-1 cursor-pointer" style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                                            <input type="radio" name="payment_option" value="offline" checked onchange="togglePaymentFields()"> Pay at Clinic
+                                        </label>
+                                        <label class="d-flex align-items-center gap-1 cursor-pointer" style="display: flex; align-items: center; gap: 0.3rem; cursor: pointer;">
+                                            <input type="radio" name="payment_option" value="online" onchange="togglePaymentFields()"> Online Payment
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div id="online_payment_fields" class="mt-3 p-3 bg-light rounded" style="display: none; padding: 1rem; background: var(--background); border-radius: 6px;">
+                                    <p class="small text-muted mb-3">Select your UPI provider:</p>
+                                    <div class="grid-3 gap-1" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                                        <div class="card p-2 text-center cursor-pointer border-hover payment-option-card" id="card-gpay" onclick="selectPaymentOption('GPay')">
+                                            <i class="fab fa-google-pay h3" style="font-size: 1.5rem; display: block; margin-bottom: 0.3rem;"></i><small>GPay</small>
+                                        </div>
+                                        <div class="card p-2 text-center cursor-pointer border-hover payment-option-card" id="card-phonepe" onclick="selectPaymentOption('PhonePe')">
+                                            <i class="fas fa-mobile-alt h3" style="font-size: 1.5rem; display: block; margin-bottom: 0.3rem;"></i><small>PhonePe</small>
+                                        </div>
+                                        <div class="card p-2 text-center cursor-pointer border-hover payment-option-card" id="card-paytm" onclick="selectPaymentOption('Paytm')">
+                                            <i class="fas fa-wallet h3" style="font-size: 1.5rem; display: block; margin-bottom: 0.3rem;"></i><small>Paytm</small>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="selected_provider" name="selected_provider">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 mt-4" id="submitBtn">
+                                Confirm Appointment Request
+                            </button>
+                        </form>
+
+                        <div class="mt-4 p-3 bg-light rounded small text-muted" style="margin-top: 1.5rem; padding: 1rem; background: var(--background); border-radius: 6px; font-size: 0.9rem;">
+                            <p class="mb-1"><strong><i class="fas fa-info-circle"></i> Note:</strong></p>
+                            <ul style="margin: 0; padding-left: 1.2rem;">
+                                <li>Approvals depend on doctor availability.</li>
+                                <li>Arrive 10 mins before your slot.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Simple Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; padding: 1.5rem; text-align: center;">
+            <div class="modal-header" style="justify-content: center; position: relative;">
+                <h3 id="modalProviderTitle">Pay with UPI</h3>
+                <span class="close" onclick="closePaymentModal()" style="position: absolute; right: 10px; top: 10px;">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="payment_processing_overlay" style="display:none;" class="text-center py-4">
+                    <i class="fas fa-circle-notch fa-spin fa-2x text-primary mb-3"></i>
+                    <p>Securing your transaction...</p>
+                </div>
+                <div class="payment-ui text-center">
+                    <div class="mb-4" style="margin-bottom: 1.5rem;">
+                        <i class="fas fa-hospital-user fa-3x text-primary mb-2" style="font-size: 3rem; color: var(--primary); margin-bottom: 0.5rem; display: block;"></i>
+                        <p class="text-muted">Paying to <strong>MedAppoint</strong></p>
+                        <h2 class="text-primary" style="font-size: 2rem; color: var(--primary); margin: 0.5rem 0;">₹<span id="modal_fee">0</span></h2>
+                    </div>
+                    <button type="button" class="btn btn-success w-100" onclick="processSimulatedPayment()">
+                        Pay Securely
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+    <script th:replace="~{layout :: scripts}"></script>
+
+    <script>
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-book');
+            if (btn) {
+                document.getElementById('doctor_id').value = btn.dataset.id;
+                handleDoctorChange();
+                document.getElementById('appointmentForm').scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        function handleDoctorChange() {
+            const select = document.getElementById('doctor_id');
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption.value) {
+                document.getElementById('display_fee').innerText = selectedOption.dataset.fee;
+                document.getElementById('payment_section').style.display = 'block';
+            } else {
+                document.getElementById('payment_section').style.display = 'none';
+            }
+        }
+
+        function togglePaymentFields() {
+            const option = document.querySelector('input[name="payment_option"]:checked').value;
+            document.getElementById('online_payment_fields').style.display = option === 'online' ? 'block' : 'none';
+            document.getElementById('payment_method_input').value = option;
+        }
+
+        let selectedProviderName = '';
+        function selectPaymentOption(name) {
+            selectedProviderName = name;
+            document.querySelectorAll('.payment-option-card').forEach(card => card.classList.remove('active'));
+            
+            const cardId = 'card-' + name.toLowerCase();
+            document.getElementById(cardId).classList.add('active');
+            document.getElementById('selected_provider').value = name;
+        }
+
+        function openPaymentModal() {
+            const option = document.querySelector('input[name="payment_option"]:checked').value;
+            if (option === 'online' && !selectedProviderName) {
+                alert('Please select a payment provider.'); 
+                return;
+            }
+            document.getElementById('modalProviderTitle').innerText = 'Pay using ' + selectedProviderName;
+            document.getElementById('modal_fee').innerText = document.getElementById('display_fee').innerText;
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+
+        function closePaymentModal() { 
+            document.getElementById('paymentModal').style.display = 'none'; 
+        }
+
+        async function processSimulatedPayment() {
+            document.getElementById('payment_processing_overlay').style.display = 'block';
+            document.querySelector('.payment-ui').style.display = 'none';
+            
+            await new Promise(r => setTimeout(r, 1500));
+            alert('Payment Successful!');
+            
+            document.getElementById('payment_status').value = 'paid';
+            document.getElementById('appointmentForm').submit();
+        }
+
+        function handleAppointmentSubmit(event) {
+            const option = document.querySelector('input[name="payment_option"]:checked').value;
+            if (option === 'online' && document.getElementById('payment_status').value === 'pending') {
+                event.preventDefault();
+                openPaymentModal();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').min = today;
+            document.getElementById('date').value = today;
+            document.getElementById('time').value = '10:00';
+        });
+    </script>
+    <style>
+        .border-top { border-top: 1px solid var(--border) !important; }
+        .bg-light { background: var(--background) !important; }
+        .cursor-pointer { cursor: pointer; }
+        .border-hover:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .h3 { font-size: 1.5rem; }
+        .cursor-pointer:active { transform: scale(0.95); }
+        .payment-option-card.active {
+            border-color: #2ecc71 !important;
+            background-color: #ebf9eb !important;
+            color: #27ae60 !important;
+        }
+    </style>
+</body>
+
+</html>

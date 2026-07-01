@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('System Audit Trail - Medical Care', ~{})}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div th:replace="~{layout :: alerts}"></div>
+
+    <main>
+        <div class="dashboard animate-fade">
+            <div class="container" style="max-width: 1000px; margin-bottom: 4rem;">
+                <header class="mb-4">
+                    <h1><i class="fas fa-history"></i> System Audit Trail</h1>
+                    <p>Track uploads, sharing, deletion, and credentials changes occurring across the platform.</p>
+                </header>
+
+                <div class="card">
+                    <h3 class="mb-4"><i class="fas fa-list"></i> Activity Log Archive</h3>
+
+                    <th:block th:if="${not #lists.isEmpty(audit_logs)}">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>User ID</th>
+                                        <th>Action</th>
+                                        <th>Resource Target</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="log : ${audit_logs}">
+                                        <td th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Time</td>
+                                        <td th:text="${log.userId}">1</td>
+                                        <td>
+                                            <span class="badge" th:classappend="${log.action == 'Upload' ? 'badge-success' : (log.action == 'Delete' ? 'badge-danger' : (log.action == 'Share' ? 'badge-primary' : 'badge-warning'))}" th:text="${log.action}">Action</span>
+                                        </td>
+                                        <td th:text="${log.targetType} + ' (#' + ${log.targetId} + ')'">Target</td>
+                                        <td th:text="${log.details}">Details</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </th:block>
+                    
+                    <th:block th:if="${#lists.isEmpty(audit_logs)}">
+                        <p class="text-muted text-center py-4">No logged operations available.</p>
+                    </th:block>
+
+                    <a th:href="@{/admin/dashboard}" class="btn btn-secondary mt-3">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+    <script th:replace="~{layout :: scripts}"></script>
+    <style>
+        .badge-primary { background: #3498db !important; }
+        .badge-success { background: #2ecc71 !important; }
+        .badge-danger { background: #e74c3c !important; }
+        .badge-warning { background: #f39c12 !important; }
+    </style>
+</body>
+
+</html>

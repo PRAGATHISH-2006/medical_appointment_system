@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Doctor Dashboard - Medical Care', ~{})}"></head>
+
+<body>
+    <nav th:replace="~{layout :: navbar}"></nav>
+    <div th:replace="~{layout :: alerts}"></div>
+
+    <main>
+        <div class="dashboard animate-fade">
+            <div class="container">
+                <header class="mb-4">
+                    <h1><i class="fas fa-stethoscope"></i> Doctor Dashboard</h1>
+                    <p>Welcome, <strong>Dr. <span th:text="${name}">Doctor Name</span></strong>!</p>
+                </header>
+
+                <div class="stats-grid mb-4">
+                    <div class="stat-card">
+                        <i class="fas fa-clock"></i>
+                        <div class="stat-info">
+                            <h3 th:text="${pending_appointments.size()}">0</h3>
+                            <p>Pending</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <div class="stat-info">
+                            <h3 th:text="${current_patients.size()}">0</h3>
+                            <p>My Patients</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i class="fas fa-calendar-check"></i>
+                        <div class="stat-info">
+                            <h3 th:text="${approved_appointments.size()}">0</h3>
+                            <p>Approved Tasks</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <i class="fas fa-pills"></i>
+                        <div class="stat-info">
+                            <h3>0</h3>
+                            <p>Prescriptions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-1-1 mb-4">
+                    <div class="card">
+                        <h3 class="mb-4"><i class="fas fa-list-ul"></i> Pending Requests</h3>
+                        <th:block th:if="${not #lists.isEmpty(pending_appointments)}">
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Schedule</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="app : ${pending_appointments}">
+                                            <td><strong th:text="${app.patient.name}">Patient Name</strong></td>
+                                            <td><span th:text="${app.date}">Date</span><br><small th:text="${app.time}">Time</small></td>
+                                            <td class="gap-1 d-flex">
+                                                <button class="btn btn-sm btn-success approve-appointment-btn" th:data-appointment-id="${app.id}">
+                                                    Approve
+                                                </button>
+                                                <button class="btn btn-sm btn-danger reject-appointment-btn" th:data-appointment-id="${app.id}">
+                                                    Reject
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </th:block>
+                        <th:block th:if="${#lists.isEmpty(pending_appointments)}">
+                            <p class="text-muted">No pending requests.</p>
+                        </th:block>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="mb-4"><i class="fas fa-user-friends"></i> Current Patients</h3>
+                        <th:block th:if="${not #lists.isEmpty(current_patients)}">
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="cp : ${current_patients}">
+                                            <td>
+                                                <strong th:text="${cp.patient.name}">Patient Name</strong><br>
+                                                <small th:text="${cp.patient.phone}">Phone</small>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex flex-column gap-1">
+                                                    <a th:href="@{'/doctor/prescription/' + ${cp.patient.id}}" class="btn btn-sm btn-primary">
+                                                        Prescription
+                                                    </a>
+                                                    <a th:href="@{'/doctor/patient-records/' + ${cp.patient.id}}" class="btn btn-sm btn-secondary">
+                                                        Records
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </th:block>
+                        <th:block th:if="${#lists.isEmpty(current_patients)}">
+                            <p class="text-muted">No current patients.</p>
+                        </th:block>
+                    </div>
+                </div>
+
+                <th:block th:if="${not #lists.isEmpty(approved_appointments)}">
+                    <div class="card animate-fade">
+                        <h3 class="mb-4"><i class="fas fa-history"></i> Recent Approved Appointments</h3>
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Date & Time</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="app : ${approved_appointments}">
+                                        <td th:text="${app.patient.name}">Patient Name</td>
+                                        <td th:text="${app.date} + ' at ' + ${app.time}">Date & Time</td>
+                                        <td><span class="badge badge-success">Approved</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{layout :: footer}"></footer>
+    <script th:replace="~{layout :: scripts}"></script>
+
+    <script>
+        document.querySelectorAll('.approve-appointment-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                if (confirm('Approve this appointment?')) {
+                    const response = await fetch(`/api/approve-appointment/${this.dataset.appointmentId}`, {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    if (data.success) { 
+                        alert(data.message); 
+                        location.reload(); 
+                    } else {
+                        alert(data.error);
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('.reject-appointment-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                if (confirm('Reject this appointment?')) {
+                    const response = await fetch(`/api/reject-appointment/${this.dataset.appointmentId}`, {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    if (data.success) { 
+                        alert(data.message); 
+                        location.reload(); 
+                    } else {
+                        alert(data.error);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

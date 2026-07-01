@@ -1,0 +1,123 @@
+package com.medicalapp.service;
+
+import com.lowagie.text.*;
+import com.lowagie.text.Font;
+import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.draw.LineSeparator;
+import com.medicalapp.model.Prescription;
+import org.springframework.stereotype.Service;
+import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+@Service
+public class PdfService {
+
+    public byte[] generatePrescriptionPdf(Prescription prescription) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Document document = new Document(PageSize.A4, 50, 50, 50, 50);
+
+        try {
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            // Font Styles
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA, 20, Font.BOLD, Color.BLACK);
+            Font sectionTitleFont = FontFactory.getFont(FontFactory.HELVETICA, 14, Font.BOLD, new Color(52, 152, 219));
+            Font boldFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Font.BOLD, Color.DARK_GRAY);
+            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12, Font.NORMAL, Color.BLACK);
+            Font footerFont = FontFactory.getFont(FontFactory.HELVETICA, 10, Font.ITALIC, Color.GRAY);
+
+            // Document Header
+            Paragraph title = new Paragraph("MEDICAL PRESCRIPTION", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingAfter(30);
+            document.add(title);
+
+            // Metadata: Doctor, Date, Patient info
+            Paragraph docInfo = new Paragraph();
+            docInfo.add(new Chunk("Doctor: ", boldFont));
+            docInfo.add(new Chunk("Dr. " + prescription.getDoctor().getName(), normalFont));
+            document.add(docInfo);
+
+            Paragraph dateInfo = new Paragraph();
+            dateInfo.add(new Chunk("Date: ", boldFont));
+            dateInfo.add(new Chunk(prescription.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), normalFont));
+            dateInfo.setSpacingAfter(5);
+            document.add(dateInfo);
+
+            Paragraph patientInfo = new Paragraph();
+            patientInfo.add(new Chunk("Patient: ", boldFont));
+            patientInfo.add(new Chunk(prescription.getPatient().getName(), normalFont));
+            patientInfo.setSpacingAfter(20);
+            document.add(patientInfo);
+
+            // Line separator
+            LineSeparator separator = new LineSeparator(1f, 100f, Color.LIGHT_GRAY, Element.ALIGN_CENTER, -5);
+            document.add(separator);
+
+            Paragraph spacing = new Paragraph(" ");
+            spacing.setSpacingAfter(10);
+            document.add(spacing);
+
+            // Section: Medicines
+            Paragraph medTitle = new Paragraph("Medicines & Dosage", sectionTitleFont);
+            medTitle.setSpacingAfter(10);
+            document.add(medTitle);
+
+            Paragraph medContent = new Paragraph(prescription.getMedicines() + "\n\nDosage:\n" + prescription.getDosage(), normalFont);
+            medContent.setSpacingAfter(20);
+            document.add(medContent);
+
+            // Section: Instructions
+            Paragraph instTitle = new Paragraph("Instructions", sectionTitleFont);
+            instTitle.setSpacingAfter(10);
+            document.add(instTitle);
+
+            String instText = prescription.getInstructions();
+            if (instText == null || instText.trim().isEmpty()) {
+                instText = "No specific instructions provided.";
+            }
+            Paragraph instContent = new Paragraph(instText, normalFont);
+            instContent.setSpacingAfter(20);
+            document.add(instContent);
+
+            // Section: Notes
+            if (prescription.getNotes() != null && !prescription.getNotes().trim().isEmpty()) {
+                Paragraph notesTitle = new Paragraph("Additional Notes", sectionTitleFont);
+                notesTitle.setSpacingAfter(10);
+                document.add(notesTitle);
+
+                Paragraph notesContent = new Paragraph(prescription.getNotes(), normalFont);
+                notesContent.setSpacingAfter(40);
+                document.add(notesContent);
+            } else {
+                Paragraph dummySpacing = new Paragraph(" ");
+                dummySpacing.setSpacingAfter(30);
+                document.add(dummySpacing);
+            }
+
+            // Doctor Signature Section
+            Paragraph signature = new Paragraph("Dr. " + prescription.getDoctor().getName(), boldFont);
+            signature.setAlignment(Element.ALIGN_RIGHT);
+            document.add(signature);
+
+            Paragraph sigLine = new Paragraph("Authorized Signature", footerFont);
+            sigLine.setAlignment(Element.ALIGN_RIGHT);
+            sigLine.setSpacingAfter(40);
+            document.add(sigLine);
+
+            // Footer
+            Paragraph footer = new Paragraph("Generated by MedAppoint System on " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), footerFont);
+            footer.setAlignment(Element.ALIGN_CENTER);
+            document.add(footer);
+
+            document.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return out.toByteArray();
+    }
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:fragment="head(title, extra_css)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}"></title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    
+    <!-- Extra CSS block -->
+    <th:block th:replace="${extra_css}"></th:block>
+</head>
+
+<body>
+    <nav th:fragment="navbar" class="navbar">
+        <div class="container">
+            <a th:href="@{/}" class="logo">
+                <i class="fas fa-heartbeat"></i> Medicalcare
+            </a>
+            <div class="nav-links">
+                <!-- If logged in -->
+                <th:block th:if="${session.user_id != null}">
+                    <span><i class="fas fa-user"></i> <span th:text="${session.name}"></span></span>
+                    
+                    <!-- Patient Nav Links -->
+                    <th:block th:if="${session.role == 'patient'}">
+                        <a th:href="@{/patient/dashboard}" th:classappend="${requestURI == '/patient/dashboard' ? 'active' : ''}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a th:href="@{/patient/medical-reports}" th:classappend="${requestURI == '/patient/medical-reports' ? 'active' : ''}">
+                            <i class="fas fa-file-medical"></i> Medical Reports
+                        </a>
+                        <a th:href="@{/patient/appointment}" th:classappend="${requestURI == '/patient/appointment' ? 'active' : ''}">
+                            <i class="fas fa-calendar-plus"></i> Book Appointment
+                        </a>
+                        <!-- [NEW] AI Assistant Link -->
+                        <a th:href="@{/patient/ai-assistant}" th:classappend="${requestURI == '/patient/ai-assistant' ? 'active' : ''}" style="font-weight: 600; color: #9b59b6;">
+                            <i class="fas fa-robot"></i> AI Healthcare Hub
+                        </a>
+                        <a th:href="@{/patient/notifications}" class="nav-icon" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge" th:if="${unread_count > 0}" th:text="${unread_count}"></span>
+                        </a>
+                        <a th:href="@{/patient/current-doctor}" th:classappend="${requestURI == '/patient/current-doctor' ? 'active' : ''}">
+                            <i class="fas fa-user-md"></i> Current Doctors
+                        </a>
+                    </th:block>
+                    
+                    <!-- Doctor Nav Links -->
+                    <th:block th:if="${session.role == 'doctor'}">
+                        <a th:href="@{/doctor/dashboard}" th:classappend="${requestURI == '/doctor/dashboard' ? 'active' : ''}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </th:block>
+                    
+                    <!-- Admin Nav Links -->
+                    <th:block th:if="${session.role == 'admin'}">
+                        <a th:href="@{/admin/dashboard}" th:classappend="${requestURI == '/admin/dashboard' ? 'active' : ''}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a th:href="@{/admin/audit-logs}" th:classappend="${requestURI == '/admin/audit-logs' ? 'active' : ''}">
+                            <i class="fas fa-history"></i> Audit Trail
+                        </a>
+                    </th:block>
+                    
+                    <a th:href="@{/logout}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </th:block>
+                
+                <!-- Guest Nav Links -->
+                <th:block th:if="${session.user_id == null}">
+                    <a th:href="@{/}" th:classappend="${requestURI == '/' ? 'active' : ''}">Home</a>
+                    <a th:href="@{/login}" th:classappend="${requestURI == '/login' ? 'active' : ''}">Login</a>
+                    <a th:href="@{/register}" th:classappend="${requestURI == '/register' ? 'active' : ''}">Register</a>
+                </th:block>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Global Flash Alerts -->
+    <div th:fragment="alerts" class="container" style="margin-top: 1rem;">
+        <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+        <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+        <div class="alert alert-warning" th:if="${warning}" th:text="${warning}"></div>
+        <div class="alert alert-info" th:if="${info}" th:text="${info}"></div>
+    </div>
+
+    <footer th:fragment="footer" class="footer">
+        <div class="container">
+            <p>&copy; <span class="current-year">2026</span> Medical Appointment System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Global Scripts -->
+    <script th:fragment="scripts" th:src="@{/js/script.js}"></script>
+</body>
+
+</html>
