@@ -1,349 +1,542 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 
-<head th:replace="~{layout :: head('Admin Dashboard - Medical Care', ~{})}"></head>
+<head th:replace="~{layout :: head('Admin Dashboard - Medicalcare', ~{::style})}">
+<style>
+  @import url('/css/dashboard.css');
+</style>
+</head>
 
-<body>
-    <nav th:replace="~{layout :: navbar}"></nav>
-    <div th:replace="~{layout :: alerts}"></div>
+<body class="dash-page">
+  <nav th:replace="~{layout :: navbar}"></nav>
+  <div th:replace="~{layout :: alerts}"></div>
 
-    <main>
-        <div class="dashboard animate-fade">
-            <div class="container">
-                <header class="mb-4">
-                    <h1><i class="fas fa-shield-alt"></i> Admin Dashboard</h1>
-                    <p>Welcome, <strong><span th:text="${session.name}">Administrator</span></strong>! Manage the system from here.</p>
-                </header>
+  <main>
+    <div class="dashboard animate-fade">
+      <div class="container">
 
-                <div class="stats-grid mb-4">
-                    <div class="stat-card">
-                        <i class="fas fa-users"></i>
-                        <div class="stat-info">
-                            <h3 th:text="${stats.total_patients}">0</h3>
-                            <p>Total Patients</p>
+        <!-- ── HEADER ── -->
+        <div class="dash-header admin-header">
+          <div class="dash-header-text">
+            <h1><i class="fas fa-shield-alt"></i> Admin Control Panel</h1>
+            <p>Welcome, <strong th:text="${session.name}">Administrator</strong>! System overview &amp; management.</p>
+          </div>
+          <div style="display:flex;gap:0.75rem;position:relative;z-index:2;">
+            <div class="dash-header-badge">
+              <i class="fas fa-calendar-day"></i>
+              <span id="today-date"></span>
+            </div>
+            <a th:href="@{/admin/audit-logs}" class="dash-header-badge" style="text-decoration:none;">
+              <i class="fas fa-history"></i> Audit Trail
+            </a>
+          </div>
+        </div>
+
+        <!-- ── STAT CARDS ── -->
+        <div class="stats-grid">
+          <div class="pstat-card pstat-blue">
+            <div class="pstat-icon"><i class="fas fa-users"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${stats.total_patients}">0</h3>
+              <p>Total Patients</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-sky">
+            <div class="pstat-icon"><i class="fas fa-user-md"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${stats.total_doctors}">0</h3>
+              <p>Approved Doctors</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-rose">
+            <div class="pstat-icon"><i class="fas fa-user-clock"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${stats.pending_approvals}">0</h3>
+              <p>Pending Approvals</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-violet">
+            <div class="pstat-icon"><i class="fas fa-hospital"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${stats.total_hospitals}">0</h3>
+              <p>Active Hospitals</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── PENDING HOSPITALS ── -->
+        <th:block th:if="${not #lists.isEmpty(pending_hospitals)}">
+          <div class="dash-card" style="margin-bottom:1.5rem;border:2px solid #a5b4fc;background:linear-gradient(135deg,#eef2ff,#fff);">
+            <div class="dash-card-header" style="border-bottom-color:#e0e7ff;">
+              <div class="dash-card-title">
+                <i class="fas fa-hospital icon-blue"></i>
+                Hospitals Awaiting Approval
+                <span class="pending-badge" th:text="${pending_hospitals.size()}" style="background:#4f46e5;color:white;">0</span>
+              </div>
+            </div>
+            <div class="dash-card-body" style="padding:0;">
+              <div class="dtable-wrap" style="border-radius:0;border:none;">
+                <table class="dtable">
+                  <thead>
+                    <tr>
+                      <th>Hospital</th>
+                      <th>Phone</th>
+                      <th>Address</th>
+                      <th>Specialties</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="h : ${pending_hospitals}">
+                      <td>
+                        <strong th:text="${h.name}">Name</strong>
+                        <div style="font-size:0.75rem;color:#64748b;" th:text="${h.email}">email</div>
+                      </td>
+                      <td th:text="${h.phone}">Phone</td>
+                      <td th:text="${h.address}">Address</td>
+                      <td><span class="sbadge sbadge-blue" th:text="${h.hospitalSpecialties}">Specs</span></td>
+                      <td>
+                        <div style="display:flex;gap:0.4rem;">
+                          <button class="btn-xs btn-xs-success approve-hospital-btn"
+                                  th:data-hospital-id="${h.id}">
+                            <i class="fas fa-check"></i> Approve
+                          </button>
+                          <button class="btn-xs btn-xs-danger reject-hospital-btn"
+                                  th:data-hospital-id="${h.id}">
+                            <i class="fas fa-times"></i> Reject
+                          </button>
                         </div>
-                    </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </th:block>
 
-                    <div class="stat-card">
-                        <i class="fas fa-user-md"></i>
-                        <div class="stat-info">
-                            <h3 th:text="${stats.total_doctors}">0</h3>
-                            <p>Approved Doctors</p>
+        <!-- ── PENDING DOCTORS (highlighted alert card) ── -->
+        <th:block th:if="${not #lists.isEmpty(pending_doctors)}">
+          <div class="dash-card" style="margin-bottom:1.5rem;border:2px solid #fde68a;background:linear-gradient(135deg,#fffbeb,#fff);">
+            <div class="dash-card-header" style="border-bottom-color:#fef3c7;">
+              <div class="dash-card-title">
+                <i class="fas fa-user-clock icon-amber"></i>
+                Doctors Awaiting Approval
+                <span class="pending-badge" th:text="${pending_doctors.size()}">0</span>
+              </div>
+              <span style="font-size:0.78rem;color:#92400e;background:#fef3c7;padding:0.25rem 0.65rem;border-radius:2rem;font-weight:700;">
+                ⚠ Action Required
+              </span>
+            </div>
+            <div class="dash-card-body" style="padding:0;">
+              <div class="dtable-wrap" style="border-radius:0;border:none;">
+                <table class="dtable">
+                  <thead>
+                    <tr>
+                      <th>Doctor</th>
+                      <th>Specialization</th>
+                      <th>Affiliated Hospital Recommendation</th>
+                      <th>Experience</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="doctor : ${pending_doctors}">
+                      <td>
+                        <div style="display:flex;align-items:center;gap:0.6rem;">
+                          <div class="dlist-avatar" style="width:2.2rem;height:2.2rem;font-size:0.8rem;background:linear-gradient(135deg,#f59e0b,#ef4444);">
+                            <span th:text="${#strings.substring(doctor.name,0,1)}">D</span>
+                          </div>
+                          <div>
+                            <strong th:text="${doctor.name}">Name</strong>
+                            <div style="font-size:0.75rem;color:#64748b;" th:text="${doctor.email}">email</div>
+                          </div>
                         </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i class="fas fa-clock"></i>
-                        <div class="stat-info">
-                            <h3 th:text="${stats.pending_approvals}">0</h3>
-                            <p>Pending Approvals</p>
+                      </td>
+                      <td>
+                        <span class="sbadge sbadge-yellow" th:text="${doctor.specialization}">Spec</span>
+                        <div style="font-size:0.72rem;color:#64748b;margin-top:0.25rem;" th:text="${doctor.qualification}">MBBS</div>
+                      </td>
+                      <td>
+                        <div th:if="${doctor.hospital != null}">
+                          <strong th:text="${doctor.hospital.name}">Hospital</strong>
+                          <div style="font-size:0.72rem;color:#10b981;font-weight:700;"><i class="fas fa-check-circle"></i> Approved by Hospital</div>
+                          <div style="font-size:0.72rem;color:#64748b;font-style:italic;" th:text="'“' + ${doctor.hospitalApprovalMessage} + '”'">Rec</div>
                         </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i class="fas fa-calendar-alt"></i>
-                        <div class="stat-info">
-                            <h3 th:text="${stats.total_appointments}">0</h3>
-                            <p>Total Appointments</p>
+                        <div th:if="${doctor.hospital == null}">
+                          <span style="font-size:0.75rem;color:#94a3b8;font-style:italic;">No Affiliation</span>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Doctors Pending Approval -->
-                <th:block th:if="${not #lists.isEmpty(pending_doctors)}">
-                    <div class="card mb-4">
-                        <h3 class="mb-4"><i class="fas fa-user-clock"></i> Doctors Pending Approval</h3>
-                        <div class="table-container">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Doctor</th>
-                                        <th>Details</th>
-                                        <th>Experience</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="doctor : ${pending_doctors}">
-                                        <td>
-                                            <strong th:text="${doctor.name}">Doctor Name</strong><br>
-                                            <small th:text="${doctor.email}">email</small>
-                                        </td>
-                                        <td>
-                                            <span th:text="${doctor.specialization}">Specialization</span><br>
-                                            <small th:text="${doctor.qualification}">Qualification</small>
-                                        </td>
-                                        <td th:text="${doctor.experience} + ' yrs'">5 yrs</td>
-                                        <td>
-                                            <div class="d-flex gap-1" style="display: flex; gap: 0.3rem;">
-                                                <button class="btn btn-sm btn-success approve-doctor-btn" th:data-doctor-id="${doctor.id}">
-                                                    Approve
-                                                </button>
-                                                <button class="btn btn-sm btn-danger reject-doctor-btn" th:data-doctor-id="${doctor.id}">
-                                                    Reject
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                      </td>
+                      <td th:text="${doctor.experience} + ' yrs'">5 yrs</td>
+                      <td>
+                        <div style="display:flex;gap:0.4rem;">
+                          <button class="btn-xs btn-xs-success approve-doctor-btn"
+                                  th:data-doctor-id="${doctor.id}">
+                            <i class="fas fa-check"></i> Approve
+                          </button>
+                          <button class="btn-xs btn-xs-danger reject-doctor-btn"
+                                  th:data-doctor-id="${doctor.id}">
+                            <i class="fas fa-times"></i> Reject
+                          </button>
                         </div>
-                    </div>
-                </th:block>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </th:block>
 
-                <div class="grid-1-1">
-                    <!-- Approved Doctors List -->
-                    <div class="card">
-                        <h3 class="mb-4"><i class="fas fa-user-md"></i> Approved Doctors</h3>
-                        <th:block th:if="${not #lists.isEmpty(all_doctors)}">
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Doctor</th>
-                                            <th>Specialization</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr th:each="doctor : ${all_doctors}">
-                                            <td>
-                                                <strong th:text="'Dr. ' + ${doctor.name}">Dr. Doctor</strong><br>
-                                                <small th:text="'₹' + ${doctor.consultationFee}">Fee</small>
-                                            </td>
-                                            <td><span class="badge badge-info" th:text="${doctor.specialization}">Specialization</span></td>
-                                            <td>
-                                                <div class="d-flex gap-1" style="display: flex; gap: 0.3rem;">
-                                                    <button class="btn btn-sm btn-primary set-fee-btn" th:data-doctor-id="${doctor.id}"
-                                                        th:data-doctor-name="${doctor.name}"
-                                                        th:data-current-fee="${doctor.consultationFee}">
-                                                        Fee
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger delete-doctor-btn"
-                                                        th:data-doctor-id="${doctor.id}" th:data-doctor-name="${doctor.name}">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+        <!-- ── APPROVED DOCTORS + PATIENTS ── -->
+        <div class="dash-grid-2">
+
+          <!-- Approved Doctors -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title">
+                <i class="fas fa-user-md icon-sky"></i> Approved Doctors
+              </div>
+              <span class="sbadge sbadge-blue" th:text="${all_doctors.size()} + ' total'">0</span>
+            </div>
+            <div class="dash-card-body" style="padding:0;">
+              <th:block th:if="${not #lists.isEmpty(all_doctors)}">
+                <div class="dtable-wrap" style="border-radius:0;border:none;">
+                  <table class="dtable">
+                    <thead>
+                      <tr>
+                        <th>Doctor</th>
+                        <th>Specialization</th>
+                        <th>Fee</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="doctor : ${all_doctors}">
+                        <td>
+                          <div style="display:flex;align-items:center;gap:0.6rem;">
+                            <div class="dlist-avatar" style="width:2rem;height:2rem;font-size:0.75rem;background:linear-gradient(135deg,#0ea5e9,#10b981);">
+                              <span th:text="${#strings.substring(doctor.name,0,1)}">D</span>
                             </div>
-                        </th:block>
-                        <th:block th:if="${#lists.isEmpty(all_doctors)}">
-                            <p class="text-muted">No approved doctors.</p>
-                        </th:block>
-                    </div>
-
-                    <!-- Registered Patients List -->
-                    <div class="card">
-                        <h3 class="mb-4"><i class="fas fa-users"></i> Registered Patients</h3>
-                        <th:block th:if="${not #lists.isEmpty(all_patients)}">
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Patient</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr th:each="patient : ${all_patients}">
-                                            <td>
-                                                <strong th:text="${patient.name}">Patient Name</strong><br>
-                                                <small th:text="${patient.email}">email</small>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-primary send-notif-btn"
-                                                    th:data-user-id="${patient.id}" th:data-user-name="${patient.name}">
-                                                    Notify
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </th:block>
-                        <th:block th:if="${#lists.isEmpty(all_patients)}">
-                            <p class="text-muted">No registered patients.</p>
-                        </th:block>
-                    </div>
+                            <strong th:text="'Dr. ' + ${doctor.name}">Dr.</strong>
+                          </div>
+                        </td>
+                        <td><span class="sbadge sbadge-blue" th:text="${doctor.specialization}">Spec</span></td>
+                        <td style="font-weight:700;color:#10b981;" th:text="'₹' + ${doctor.consultationFee}">₹500</td>
+                        <td>
+                          <div style="display:flex;gap:0.4rem;">
+                            <button class="btn-xs btn-xs-primary set-fee-btn"
+                                    th:data-doctor-id="${doctor.id}"
+                                    th:data-doctor-name="${doctor.name}"
+                                    th:data-current-fee="${doctor.consultationFee}">
+                              <i class="fas fa-tag"></i> Fee
+                            </button>
+                            <button class="btn-xs btn-xs-danger delete-doctor-btn"
+                                    th:data-doctor-id="${doctor.id}"
+                                    th:data-doctor-name="${doctor.name}">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
+              </th:block>
+              <th:block th:if="${#lists.isEmpty(all_doctors)}">
+                <div class="empty-state">
+                  <i class="fas fa-user-md"></i>
+                  <p>No approved doctors yet.</p>
+                </div>
+              </th:block>
             </div>
-        </div>
-    </main>
+          </div>
 
-    <!-- Modals -->
-    <!-- Send Notification Modal -->
-    <div id="notificationModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-paper-plane"></i> Send Notification</h3>
-                <span class="close" onclick="closeModal('notificationModal')">&times;</span>
+          <!-- Registered Patients -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title">
+                <i class="fas fa-users icon-violet"></i> Registered Patients
+              </div>
+              <span class="sbadge sbadge-violet" th:text="${all_patients.size()} + ' total'">0</span>
             </div>
-            <div class="modal-body">
-                <form id="notificationForm">
-                    <input type="hidden" id="notif-user-id">
-                    <div class="form-group">
-                        <label>Recipient: <strong id="notif-user-name">Patient Name</strong></label>
-                    </div>
-                    <div class="form-group">
-                        <label for="notif-type">Type</label>
-                        <select id="notif-type" class="form-control">
-                            <option value="general">General</option>
-                            <option value="appointment">Appointment</option>
-                            <option value="checkup">Checkup</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="notif-message">Message</label>
-                        <textarea id="notif-message" class="form-control" rows="4" required placeholder="Type notification details..."></textarea>
-                    </div>
-                    <div class="text-center mt-3 d-flex gap-2" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                        <button type="submit" class="btn btn-primary w-100">Send</button>
-                        <button type="button" class="btn btn-secondary w-100" onclick="closeModal('notificationModal')">Cancel</button>
-                    </div>
-                </form>
+            <div class="dash-card-body" style="padding:0;">
+              <th:block th:if="${not #lists.isEmpty(all_patients)}">
+                <div class="dtable-wrap" style="border-radius:0;border:none;">
+                  <table class="dtable">
+                    <thead>
+                      <tr>
+                        <th>Patient</th>
+                        <th>Email</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="patient : ${all_patients}">
+                        <td>
+                          <div style="display:flex;align-items:center;gap:0.6rem;">
+                            <div class="dlist-avatar" style="width:2rem;height:2rem;font-size:0.75rem;background:linear-gradient(135deg,#8b5cf6,#ec4899);">
+                              <span th:text="${#strings.substring(patient.name,0,1)}">P</span>
+                            </div>
+                            <strong th:text="${patient.name}">Patient Name</strong>
+                          </div>
+                        </td>
+                        <td style="font-size:0.8rem;color:#64748b;" th:text="${patient.email}">email</td>
+                        <td>
+                          <button class="btn-xs btn-xs-violet send-notif-btn"
+                                  th:data-user-id="${patient.id}"
+                                  th:data-user-name="${patient.name}">
+                            <i class="fas fa-paper-plane"></i> Notify
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </th:block>
+              <th:block th:if="${#lists.isEmpty(all_patients)}">
+                <div class="empty-state">
+                  <i class="fas fa-users"></i>
+                  <p>No registered patients yet.</p>
+                </div>
+              </th:block>
             </div>
+          </div>
         </div>
+
+        <!-- Approved Network Hospitals -->
+        <div class="dash-card" style="margin-top: 1.5rem;">
+          <div class="dash-card-header">
+            <div class="dash-card-title">
+              <i class="fas fa-hospital-alt icon-violet"></i> Registered Network Hospitals
+            </div>
+            <span class="sbadge sbadge-violet" th:text="${all_hospitals.size()} + ' active'">0</span>
+          </div>
+          <div class="dash-card-body" style="padding:0;">
+            <th:block th:if="${not #lists.isEmpty(all_hospitals)}">
+              <div class="dtable-wrap" style="border-radius:0;border:none;">
+                <table class="dtable">
+                  <thead>
+                    <tr>
+                      <th>Hospital</th>
+                      <th>Address</th>
+                      <th>Phone</th>
+                      <th>Specialties</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="h : ${all_hospitals}">
+                      <td>
+                        <strong th:text="${h.name}">Hospital</strong>
+                        <div style="font-size:0.75rem;color:#64748b;" th:text="${h.email}">Email</div>
+                      </td>
+                      <td th:text="${h.address}">Address</td>
+                      <td th:text="${h.phone}">Phone</td>
+                      <td><span class="sbadge sbadge-blue" th:text="${h.hospitalSpecialties}">Specs</span></td>
+                      <td>
+                        <a th:href="@{'/patient/hospital/' + ${h.id}}" class="btn-xs btn-xs-success" style="text-decoration:none;" target="_blank">
+                          <i class="fas fa-external-link-alt"></i> Public Profile
+                        </a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </th:block>
+            <th:block th:if="${#lists.isEmpty(all_hospitals)}">
+              <div class="empty-state">
+                <i class="fas fa-hospital"></i>
+                <p>No active hospitals registered.</p>
+              </div>
+            </th:block>
+          </div>
+        </div>
+
+      </div>
     </div>
+  </main>
 
-    <!-- Set Consultation Fee Modal -->
-    <div id="feeModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-tag"></i> Set Fees</h3>
-                <span class="close" onclick="closeModal('feeModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="feeForm">
-                    <input type="hidden" id="fee-doctor-id">
-                    <div class="form-group">
-                        <label>Doctor: <strong id="fee-doctor-name">Doctor Name</strong></label>
-                    </div>
-                    <div class="form-group">
-                        <label for="consultation-fee">Fee (₹)</label>
-                        <input type="number" id="consultation-fee" class="form-control" required placeholder="500">
-                    </div>
-                    <div class="text-center mt-3 d-flex gap-2" style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                        <button type="submit" class="btn btn-primary w-100">Update</button>
-                        <button type="button" class="btn btn-secondary w-100" onclick="closeModal('feeModal')">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+  <!-- ── SEND NOTIFICATION MODAL ── -->
+  <div id="notificationModal" class="modal">
+    <div class="modal-content" style="border-top:4px solid #8b5cf6;">
+      <div class="modal-header">
+        <h3 style="display:flex;align-items:center;gap:0.5rem;color:#8b5cf6;">
+          <i class="fas fa-paper-plane"></i> Send Notification
+        </h3>
+        <span class="close" onclick="closeModal('notificationModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="notificationForm">
+          <input type="hidden" id="notif-user-id">
+          <p style="font-size:0.88rem;color:#64748b;margin-bottom:1rem;">
+            Sending to: <strong id="notif-user-name" style="color:#1e293b;">Patient</strong>
+          </p>
+          <div class="form-group">
+            <label for="notif-type" style="font-size:0.82rem;font-weight:700;color:#475569;">Type</label>
+            <select id="notif-type" class="form-control">
+              <option value="general">General</option>
+              <option value="appointment">Appointment</option>
+              <option value="checkup">Checkup Reminder</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="notif-message" style="font-size:0.82rem;font-weight:700;color:#475569;">Message</label>
+            <textarea id="notif-message" class="form-control" rows="4" required
+                      placeholder="Type your message here..."></textarea>
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-paper-plane"></i> Send
+            </button>
+            <button type="button" class="btn btn-secondary w-100" onclick="closeModal('notificationModal')">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <footer th:replace="~{layout :: footer}"></footer>
-    <script th:replace="~{layout :: scripts}"></script>
+  <!-- ── SET FEE MODAL ── -->
+  <div id="feeModal" class="modal">
+    <div class="modal-content" style="border-top:4px solid #0ea5e9;">
+      <div class="modal-header">
+        <h3 style="display:flex;align-items:center;gap:0.5rem;color:#0ea5e9;">
+          <i class="fas fa-tag"></i> Set Consultation Fee
+        </h3>
+        <span class="close" onclick="closeModal('feeModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="feeForm">
+          <input type="hidden" id="fee-doctor-id">
+          <p style="font-size:0.88rem;color:#64748b;margin-bottom:1rem;">
+            Doctor: <strong id="fee-doctor-name" style="color:#1e293b;">Dr. Name</strong>
+          </p>
+          <div class="form-group">
+            <label for="consultation-fee" style="font-size:0.82rem;font-weight:700;color:#475569;">Fee (₹)</label>
+            <input type="number" id="consultation-fee" class="form-control" required placeholder="e.g. 500">
+          </div>
+          <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-save"></i> Update Fee
+            </button>
+            <button type="button" class="btn btn-secondary w-100" onclick="closeModal('feeModal')">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+  <footer th:replace="~{layout :: footer}"></footer>
+  <script th:replace="~{layout :: scripts}"></script>
+  <script>
+    document.getElementById('today-date').textContent =
+      new Date().toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    // Set Fee
+    document.querySelectorAll('.set-fee-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.getElementById('fee-doctor-id').value   = this.dataset.doctorId;
+        document.getElementById('fee-doctor-name').innerText = this.dataset.doctorName;
+        document.getElementById('consultation-fee').value = this.dataset.currentFee;
+        document.getElementById('feeModal').style.display = 'flex';
+      });
+    });
+
+    document.getElementById('feeForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const res  = await fetch(`/api/update-doctor-fee/${document.getElementById('fee-doctor-id').value}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consultation_fee: document.getElementById('consultation-fee').value })
+      });
+      const data = await res.json();
+      if (data.success) { alert(data.message); location.reload(); } else { alert(data.error); }
+    });
+
+    // Approve / Reject Doctor
+    document.querySelectorAll('.approve-doctor-btn').forEach(btn => {
+      btn.addEventListener('click', async function () {
+        if (confirm('Approve this doctor?')) {
+          const res  = await fetch(`/api/approve-doctor/${this.dataset.doctorId}`, { method: 'POST' });
+          const data = await res.json();
+          if (data.success) { alert(data.message); location.reload(); } else { alert(data.error); }
         }
+      });
+    });
 
-        document.querySelectorAll('.set-fee-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                document.getElementById('fee-doctor-id').value = this.dataset.doctorId;
-                document.getElementById('fee-doctor-name').innerText = this.dataset.doctorName;
-                document.getElementById('consultation-fee').value = this.dataset.currentFee;
-                document.getElementById('feeModal').style.display = 'flex';
-            });
-        });
+    document.querySelectorAll('.reject-doctor-btn').forEach(btn => {
+      btn.addEventListener('click', async function () {
+        if (confirm('Reject this doctor?')) {
+          const res  = await fetch(`/api/reject-doctor/${this.dataset.doctorId}`, { method: 'POST' });
+          const data = await res.json();
+          if (data.success) { alert(data.message); location.reload(); } else { alert(data.error); }
+        }
+      });
+    });
 
-        document.getElementById('feeForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const doctorId = document.getElementById('fee-doctor-id').value;
-            const fee = document.getElementById('consultation-fee').value;
-            
-            const response = await fetch(`/api/update-doctor-fee/${doctorId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ consultation_fee: fee })
-            });
-            const data = await response.json();
-            if (data.success) { 
-                alert(data.message); 
-                location.reload(); 
-            } else {
-                alert(data.error);
-            }
-        });
+    // Approve / Reject Hospital
+    document.querySelectorAll('.approve-hospital-btn').forEach(btn => {
+      btn.addEventListener('click', async function () {
+        if (confirm('Approve this hospital?')) {
+          const res  = await fetch(`/api/approve-hospital/${this.dataset.hospitalId}`, { method: 'POST' });
+          const data = await res.json();
+          if (data.success) { alert(data.message); location.reload(); } else { alert(data.error); }
+        }
+      });
+    });
 
-        document.querySelectorAll('.approve-doctor-btn').forEach(btn => {
-            btn.addEventListener('click', async function () {
-                if (confirm('Approve this doctor?')) {
-                    const response = await fetch(`/api/approve-doctor/${this.dataset.doctorId}`, { method: 'POST' });
-                    const data = await response.json();
-                    if (data.success) { 
-                        alert(data.message); 
-                        location.reload(); 
-                    } else {
-                        alert(data.error);
-                    }
-                }
-            });
-        });
+    document.querySelectorAll('.reject-hospital-btn').forEach(btn => {
+      btn.addEventListener('click', async function () {
+        if (confirm('Reject this hospital?')) {
+          const res  = await fetch(`/api/reject-hospital/${this.dataset.hospitalId}`, { method: 'POST' });
+          const data = await res.json();
+          if (data.success) { alert(data.message); location.reload(); } else { alert(data.error); }
+        }
+      });
+    });
 
-        document.querySelectorAll('.reject-doctor-btn').forEach(btn => {
-            btn.addEventListener('click', async function () {
-                if (confirm('Reject this doctor? This will remove their record.')) {
-                    const response = await fetch(`/api/reject-doctor/${this.dataset.doctorId}`, { method: 'POST' });
-                    const data = await response.json();
-                    if (data.success) { 
-                        alert(data.message); 
-                        location.reload(); 
-                    } else {
-                        alert(data.error);
-                    }
-                }
-            });
-        });
+    // Delete Doctor
+    document.querySelectorAll('.delete-doctor-btn').forEach(btn => {
+      btn.addEventListener('click', async function () {
+        if (confirm(`Delete Dr. ${this.dataset.doctorName}?`)) {
+          const res  = await fetch(`/api/delete-doctor/${this.dataset.doctorId}`, { method: 'POST' });
+          const data = await res.json();
+          if (data.success) { alert(data.message); location.reload(); } else { alert(data.error); }
+        }
+      });
+    });
 
-        document.querySelectorAll('.delete-doctor-btn').forEach(btn => {
-            btn.addEventListener('click', async function () {
-                if (confirm(`Delete Dr. ${this.dataset.doctorName}?`)) {
-                    const response = await fetch(`/api/delete-doctor/${this.dataset.doctorId}`, { method: 'POST' });
-                    const data = await response.json();
-                    if (data.success) { 
-                        alert(data.message); 
-                        location.reload(); 
-                    } else {
-                        alert(data.error);
-                    }
-                }
-            });
-        });
+    // Send Notification
+    document.querySelectorAll('.send-notif-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        document.getElementById('notif-user-id').value = this.dataset.userId;
+        document.getElementById('notif-user-name').innerText = this.dataset.userName;
+        document.getElementById('notif-message').value = '';
+        document.getElementById('notificationModal').style.display = 'flex';
+      });
+    });
 
-        document.querySelectorAll('.send-notif-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                document.getElementById('notif-user-id').value = this.dataset.userId;
-                document.getElementById('notif-user-name').innerText = this.dataset.userName;
-                document.getElementById('notif-message').value = '';
-                document.getElementById('notificationModal').style.display = 'flex';
-            });
-        });
-
-        document.getElementById('notificationForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const userId = document.getElementById('notif-user-id').value;
-            const message = document.getElementById('notif-message').value;
-            const type = document.getElementById('notif-type').value;
-
-            const response = await fetch('/api/send-notification', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: userId, message: message, type: type })
-            });
-            const data = await response.json();
-            if (data.success) {
-                alert('Notification sent successfully!');
-                closeModal('notificationModal');
-            } else {
-                alert(data.error);
-            }
-        });
-    </script>
+    document.getElementById('notificationForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const res = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: document.getElementById('notif-user-id').value,
+          message: document.getElementById('notif-message').value,
+          type:    document.getElementById('notif-type').value
+        })
+      });
+      const data = await res.json();
+      if (data.success) { alert('Notification sent!'); closeModal('notificationModal'); }
+      else { alert(data.error); }
+    });
+  </script>
 </body>
-
 </html>

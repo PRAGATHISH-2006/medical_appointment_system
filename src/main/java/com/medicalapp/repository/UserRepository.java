@@ -9,4 +9,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     List<User> findByRole(String role);
     List<User> findByRoleAndIsApproved(String role, boolean isApproved);
+    List<User> findByHospitalId(Long hospitalId);
+    List<User> findByHospitalIdAndRole(Long hospitalId, String role);
+    List<User> findByHospitalIdAndRoleAndHospitalApproved(Long hospitalId, String role, boolean hospitalApproved);
+    List<User> findByHospitalIdAndRoleAndHospitalApprovedAndIsApproved(Long hospitalId, String role, boolean hospitalApproved, boolean isApproved);
+    List<User> findByRoleAndHospitalApprovedAndIsApproved(String role, boolean hospitalApproved, boolean isApproved);
 }

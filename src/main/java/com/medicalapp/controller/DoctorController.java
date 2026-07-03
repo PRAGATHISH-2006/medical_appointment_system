@@ -35,9 +35,13 @@ public class DoctorController {
     @Autowired
     private RecordShareRepository recordShareRepository;
 
+    @Autowired
+    private HospitalAnnouncementRepository hospitalAnnouncementRepository;
+
     @GetMapping("/doctor/dashboard")
     public String dashboard(HttpSession session, Model model) {
         Long doctorId = (Long) session.getAttribute("user_id");
+        User doc = userRepository.findById(doctorId).orElseThrow();
 
         List<Appointment> pendingAppointments = appointmentRepository.findByDoctorIdAndStatusOrderByCreatedAtDesc(doctorId, "pending");
         List<Appointment> approvedAppointments = appointmentRepository.findByDoctorIdAndStatusOrderByCreatedAtDesc(doctorId, "approved");
@@ -46,9 +50,18 @@ public class DoctorController {
         // Limit approved appointments size matching legacy view
         List<Appointment> limitApproved = approvedAppointments.stream().limit(5).toList();
 
+        // Get hospital announcements
+        List<HospitalAnnouncement> announcements = null;
+        if (doc.getHospital() != null) {
+            announcements = hospitalAnnouncementRepository.findByHospitalIdOrderByCreatedAtDesc(doc.getHospital().getId());
+        }
+
         model.addAttribute("pending_appointments", pendingAppointments);
         model.addAttribute("approved_appointments", limitApproved);
         model.addAttribute("current_patients", currentPatients);
+        model.addAttribute("hospitalName", doc.getHospital() != null ? doc.getHospital().getName() : "None");
+        model.addAttribute("availabilityStatus", doc.getAvailabilityStatus());
+        model.addAttribute("announcements", announcements);
 
         return "doctor_dashboard";
     }

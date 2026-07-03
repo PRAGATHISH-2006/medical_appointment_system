@@ -1,88 +1,250 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 
-<head th:replace="~{layout :: head('Home - Medical Care', ~{})}"></head>
+<head th:replace="~{layout :: head('Medical Care', ~{::style})}">
+<style>
+    /* Full screen splash intro with colorful glowing gradients and micro-particles */
+    body {
+        margin: 0;
+        background: radial-gradient(circle at 20% 30%, #0f172a 0%, #090d16 100%);
+        overflow: hidden;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .splash-container {
+        position: relative;
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 2;
+    }
+
+    /* Colorful animated backdrop blur spots */
+    .glow-spot {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(140px);
+        opacity: 0.45;
+        animation: floatGlow 12s infinite alternate ease-in-out;
+        pointer-events: none;
+    }
+    .glow-spot-1 {
+        width: 450px; height: 450px;
+        background: radial-gradient(circle, #3b82f6, #60a5fa);
+        top: 15%; left: 10%;
+    }
+    .glow-spot-2 {
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, #8b5cf6, #d946ef);
+        bottom: 10%; right: 5%;
+        animation-delay: -4s;
+    }
+    .glow-spot-3 {
+        width: 350px; height: 350px;
+        background: radial-gradient(circle, #10b981, #14b8a6);
+        top: 50%; left: 55%;
+        animation-delay: -8s;
+    }
+
+    @keyframes floatGlow {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(40px, -50px) scale(1.15); }
+        100% { transform: translate(-20px, 30px) scale(0.9); }
+    }
+
+    /* Medical Care Logo Animation */
+    .splash-logo-card {
+        text-align: center;
+        animation: logoScaleIn 1.4s cubic-bezier(0.19, 1, 0.22, 1) both;
+    }
+
+    .splash-icon-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 120px; height: 120px;
+        border-radius: 2.2rem;
+        background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+        border: 1px solid rgba(255,255,255,0.15);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        margin-bottom: 2rem;
+    }
+
+    .splash-icon {
+        font-size: 3.5rem;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6 50%, #ec4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulseBeat 1.6s ease-in-out infinite;
+    }
+
+    .splash-ring {
+        position: absolute;
+        inset: -8px;
+        border-radius: 2.5rem;
+        border: 2px solid #8b5cf6;
+        opacity: 0.7;
+        animation: rippleOuter 2s infinite ease-out;
+    }
+
+    @keyframes logoScaleIn {
+        0% { opacity: 0; transform: translateY(40px) scale(0.9); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes pulseBeat {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(139,92,246,0)); }
+        50% { transform: scale(1.12); filter: drop-shadow(0 0 15px rgba(139,92,246,0.6)); }
+    }
+
+    @keyframes rippleOuter {
+        0% { transform: scale(0.9); opacity: 0.9; }
+        100% { transform: scale(1.35); opacity: 0; }
+    }
+
+    /* Attractive Typography styling */
+    .splash-logo-card h1 {
+        font-size: 3.8rem;
+        font-weight: 800;
+        color: white;
+        margin: 0;
+        letter-spacing: -2px;
+        font-family: 'Outfit', sans-serif;
+    }
+    .splash-logo-card h1 span {
+        background: linear-gradient(90deg, #60a5fa, #a78bfa 50%, #f472b6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .splash-logo-card p {
+        font-size: 1.2rem;
+        color: #94a3b8;
+        margin-top: 1rem;
+        margin-bottom: 2.5rem;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+    }
+
+    /* Pulse wave loading animation */
+    .pulse-loader {
+        display: flex;
+        gap: 8px;
+        margin-top: 1.5rem;
+        justify-content: center;
+    }
+    .pulse-bar {
+        width: 6px; height: 24px;
+        background: linear-gradient(to top, #60a5fa, #a78bfa);
+        border-radius: 4px;
+        animation: pulseBarAnim 1.2s infinite ease-in-out;
+    }
+    .pulse-bar:nth-child(2) { animation-delay: 0.15s; }
+    .pulse-bar:nth-child(3) { animation-delay: 0.3s; }
+    .pulse-bar:nth-child(4) { animation-delay: 0.45s; }
+    .pulse-bar:nth-child(5) { animation-delay: 0.6s; }
+
+    @keyframes pulseBarAnim {
+        0%, 100% { transform: scaleY(0.4); }
+        50% { transform: scaleY(1.3); }
+    }
+
+    /* Smooth auto redirect progress bar */
+    .progress-bar-wrap {
+        width: 240px;
+        height: 4px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 0 auto;
+        position: relative;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+        animation: loadProgress 3.8s linear forwards;
+    }
+    @keyframes loadProgress {
+        0% { width: 0%; }
+        100% { width: 100%; }
+    }
+
+    .direct-btn {
+        margin-top: 2rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #e2e8f0;
+        text-decoration: none;
+        padding: 0.65rem 1.35rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.25s ease;
+        backdrop-filter: blur(10px);
+    }
+    .direct-btn:hover {
+        background: white;
+        color: #090d16;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255,255,255,0.1);
+    }
+</style>
+</head>
 
 <body>
-    <nav th:replace="~{layout :: navbar}"></nav>
-    <div th:replace="~{layout :: alerts}"></div>
+    <!-- Glow backdrops -->
+    <div class="glow-spot glow-spot-1"></div>
+    <div class="glow-spot glow-spot-2"></div>
+    <div class="glow-spot glow-spot-3"></div>
 
-    <main>
-        <div class="hero">
-            <div class="container">
-                <h1>Medical Care</h1>
-                <p>Book appointments with doctors, manage prescriptions, and access medical reports all in one secure platform.</p>
-                <div class="cta-buttons">
-                    <a th:href="@{/register}" class="btn btn-primary">
-                        <i class="fas fa-user-plus"></i> Get Started
-                    </a>
-                    <a th:href="@{/login}" class="btn btn-secondary">
-                        <i class="fas fa-sign-in-alt"></i> Login
-                    </a>
+    <div class="splash-container">
+        <div class="splash-logo-card">
+            <!-- Icon Wrapper -->
+            <div class="splash-icon-wrapper">
+                <div class="splash-ring"></div>
+                <i class="fas fa-heartbeat splash-icon"></i>
+            </div>
+
+            <!-- Typography -->
+            <h1><span>Medicalcare</span></h1>
+            <p>Smart healthcare solutions at your fingertips</p>
+
+            <div style="margin-bottom: 2rem;">
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill"></div>
+                </div>
+                <div class="pulse-loader">
+                    <div class="pulse-bar"></div>
+                    <div class="pulse-bar"></div>
+                    <div class="pulse-bar"></div>
+                    <div class="pulse-bar"></div>
+                    <div class="pulse-bar"></div>
                 </div>
             </div>
-        </div>
 
-        <div class="features animate-fade">
-            <div class="container">
-                <h2 class="text-center mb-4">Our Features</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="icon-box">
-                            <i class="fas fa-user-md"></i>
-                        </div>
-                        <h3>For Patients</h3>
-                        <p>Book appointments, view prescriptions, access medical reports, and manage your healthcare all in one place.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="icon-box success">
-                            <i class="fas fa-stethoscope"></i>
-                        </div>
-                        <h3>For Doctors</h3>
-                        <p>Manage appointments, view patient history, write prescriptions, and provide remote consultations.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="icon-box danger">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h3>Secure & Reliable</h3>
-                        <p>Your medical data is protected with advanced security measures and encrypted communications.</p>
-                    </div>
-                </div>
-            </div>
+            <!-- Fallback skip button -->
+            <a th:href="@{/login}" class="direct-btn">
+                Enter Portal <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
+    </div>
 
-        <div class="container animate-fade" style="margin-top: 4rem; margin-bottom: 4rem;">
-            <div class="card">
-                <h3 class="text-center">How It Works</h3>
-                <div class="steps-grid">
-                    <div class="step-item">
-                        <div class="step-number">1</div>
-                        <h4>Register Account</h4>
-                        <p>Create your account as Patient, Doctor, or wait for Admin approval.</p>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-number">2</div>
-                        <h4>Book Appointment</h4>
-                        <p>Patients can browse doctors and book appointments online.</p>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-number">3</div>
-                        <h4>Get Treatment</h4>
-                        <p>Doctors approve appointments and provide prescriptions.</p>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-number">4</div>
-                        <h4>Manage Health</h4>
-                        <p>Access medical reports and prescriptions anytime.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <footer th:replace="~{layout :: footer}"></footer>
-    <script th:replace="~{layout :: scripts}"></script>
+    <!-- 3 seconds auto redirect script -->
+    <script>
+        setTimeout(() => {
+            window.location.href = "/login";
+        }, 3600);
+    </script>
 </body>
 
 </html>
+

@@ -28,19 +28,26 @@ public class AdminController {
 
     @GetMapping("/admin/dashboard")
     public String dashboard(Model model) {
-        List<User> pendingDoctors = userRepository.findByRoleAndIsApproved("doctor", false);
+        // Show doctors that are approved by their hospital but pending final admin approval
+        List<User> pendingDoctors = userRepository.findByRoleAndHospitalApprovedAndIsApproved("doctor", true, false);
         List<User> allDoctors = userRepository.findByRoleAndIsApproved("doctor", true);
         List<User> allPatients = userRepository.findByRole("patient");
+        List<User> pendingHospitals = userRepository.findByRoleAndIsApproved("hospital", false);
+        List<User> allHospitals = userRepository.findByRoleAndIsApproved("hospital", true);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("total_patients", allPatients.size());
         stats.put("total_doctors", allDoctors.size());
-        stats.put("pending_approvals", pendingDoctors.size());
+        stats.put("pending_approvals", pendingDoctors.size() + pendingHospitals.size());
         stats.put("total_appointments", appointmentRepository.count());
+        stats.put("total_hospitals", allHospitals.size());
+        stats.put("pending_hospitals", pendingHospitals.size());
 
         model.addAttribute("pending_doctors", pendingDoctors);
         model.addAttribute("all_doctors", allDoctors);
         model.addAttribute("all_patients", allPatients);
+        model.addAttribute("pending_hospitals", pendingHospitals);
+        model.addAttribute("all_hospitals", allHospitals);
         model.addAttribute("stats", stats);
 
         // Fetch logs to embed directly in dashboard or a separate tab

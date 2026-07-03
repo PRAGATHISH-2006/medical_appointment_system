@@ -31,7 +31,42 @@ public class AiAgentController {
     @Autowired
     private PrescriptionReminderRepository prescriptionReminderRepository;
 
+    // ── Gemini Chat (unified endpoint for all agent types) ──────────────────
+    @PostMapping("/gemini-chat")
+    public ResponseEntity<Map<String, Object>> geminiChat(
+            @RequestBody Map<String, String> payload,
+            HttpSession session) {
+
+        String agentType = payload.getOrDefault("agent", "symptoms");
+        String message   = payload.get("message");
+        String patientName = (String) session.getAttribute("name");
+
+        if (message == null || message.isBlank()) {
+            Map<String, Object> err = new HashMap<>();
+            err.put("error", "Message is required");
+            return ResponseEntity.badRequest().body(err);
+        }
+
+        String reply = aiAgentService.handleGeminiChat(agentType, message, patientName);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("success", true);
+        body.put("reply", reply);
+        return ResponseEntity.ok(body);
+    }
+
+    // ── Gemini status check ──────────────────────────────────────────────────
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> status() {
+        // Will return whether Gemini key is configured, without exposing the key
+        boolean hasKey = aiAgentService.isGeminiConfigured();
+        Map<String, Object> body = new HashMap<>();
+        body.put("geminiEnabled", hasKey);
+        return ResponseEntity.ok(body);
+    }
+
     @PostMapping("/symptom-checker")
+
     public ResponseEntity<Map<String, Object>> symptomChecker(@RequestBody Map<String, String> payload) {
         String symptoms = payload.get("symptoms");
         if (symptoms == null || symptoms.trim().isEmpty()) {

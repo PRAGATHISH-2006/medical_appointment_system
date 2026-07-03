@@ -1,119 +1,154 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{layout :: head('My Doctors - Medicalcare', ~{::style})}">
+<style>
+@import url('/css/dashboard.css');
+.doc-hero-card {
+  background: linear-gradient(135deg, #0ea5e9 0%, #10b981 100%);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  animation: cardIn 0.5s ease both;
+}
+.doc-hero-card:nth-child(2) { animation-delay: 0.1s; }
+.doc-hero-card:nth-child(3) { animation-delay: 0.2s; }
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(18px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.doc-hero-card::before {
+  content:'';position:absolute;width:200px;height:200px;border-radius:50%;
+  background:rgba(255,255,255,0.07);top:-80px;right:-50px;
+}
+.doc-hero-avatar {
+  width:4.5rem;height:4.5rem;border-radius:50%;
+  background:rgba(255,255,255,0.25);border:3px solid rgba(255,255,255,0.5);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.75rem;font-weight:900;color:white;font-family:'Outfit',sans-serif;
+  margin-bottom:1rem;
+}
+.doc-hero-name { font-size:1.25rem;font-weight:800;color:white;margin-bottom:0.2rem;font-family:'Outfit',sans-serif; }
+.doc-hero-spec { font-size:0.85rem;opacity:0.88;margin-bottom:1.25rem; }
+.doc-info-row  { display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;opacity:0.88;margin-bottom:0.4rem; }
+.doc-hero-divider { height:1px;background:rgba(255,255,255,0.25);margin:1rem 0; }
+.rx-item {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.6rem 0;border-bottom:1px solid rgba(255,255,255,0.15);
+}
+.rx-item:last-child { border-bottom:none; }
+.rx-date { font-size:0.8rem;opacity:0.9; }
+.rx-download {
+  width:1.8rem;height:1.8rem;border-radius:50%;
+  background:rgba(255,255,255,0.2);border:none;color:white;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:0.8rem;
+  transition:background 0.2s;
+}
+.rx-download:hover { background:rgba(255,255,255,0.35); }
+.doc-action-row { display:flex;gap:0.75rem;margin-top:1.25rem; }
+.doc-action-btn {
+  flex:1;padding:0.7rem;border-radius:0.75rem;border:none;cursor:pointer;
+  font-size:0.85rem;font-weight:700;font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:0.5rem;
+  text-decoration:none;transition:all 0.2s;
+}
+.doc-btn-primary { background:rgba(255,255,255,0.25);color:white; }
+.doc-btn-primary:hover { background:rgba(255,255,255,0.38);color:white; }
+.doc-btn-remove { background:rgba(244,63,94,0.25);color:white; }
+.doc-btn-remove:hover { background:rgba(244,63,94,0.45); }
+</style>
+</head>
+<body class="dash-page">
+<nav th:replace="~{layout :: navbar}"></nav>
+<div th:replace="~{layout :: alerts}"></div>
+<main>
+  <div class="dashboard animate-fade">
+    <div class="container">
 
-<head th:replace="~{layout :: head('My Doctors - Medical Care', ~{})}"></head>
-
-<body>
-    <nav th:replace="~{layout :: navbar}"></nav>
-    <div th:replace="~{layout :: alerts}"></div>
-
-    <main>
-        <div class="dashboard animate-fade">
-            <div class="container">
-                <header class="mb-4">
-                    <h1><i class="fas fa-user-md"></i> My Doctors</h1>
-                    <p>Welcome, <strong><span th:text="${name}">Patient Name</span></strong>! Manage your current healthcare team.</p>
-                </header>
-
-                <th:block th:if="${not #lists.isEmpty(current_doctors)}">
-                    <div class="grid-2 gap-3" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                        <div class="card d-flex flex-column justify-content-between h-100" th:each="cd : ${current_doctors}" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
-                            <div>
-                                <div class="d-flex justify-content-between align-items-start mb-3" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                                    <div>
-                                        <h3 class="mb-1" th:text="'Dr. ' + ${cd.doctor.name}">Dr. Doctor Name</h3>
-                                        <span class="badge badge-info mb-2" th:text="${cd.doctor.specialization}">Specialization</span>
-                                    </div>
-                                    <button class="btn btn-sm btn-outline-danger" th:onclick="'removeDoctor(' + ${cd.id} + ')'">
-                                        <i class="fas fa-user-times"></i>
-                                    </button>
-                                </div>
-
-                                <div class="text-muted small mb-4" style="margin-bottom: 1.5rem; font-size: 0.9rem;">
-                                    <p class="mb-1" style="margin: 0.1rem 0;"><i class="fas fa-graduation-cap"></i> <span th:text="${cd.doctor.qualification}">Qualification</span></p>
-                                    <p class="mb-1" style="margin: 0.1rem 0;"><i class="fas fa-briefcase"></i> <span th:text="${cd.doctor.experience}">5</span> yrs experience</p>
-                                    <p class="mb-1" style="margin: 0.1rem 0;"><i class="fas fa-phone"></i> <span th:text="${cd.doctor.phone}">0000</span></p>
-                                </div>
-
-                                <th:block th:if="${not #lists.isEmpty(prescriptions.get(cd.id))}">
-                                    <div class="mt-4 pt-3 border-top" style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1.5rem;">
-                                        <h4 class="small text-muted mb-3" style="font-size: 0.9rem; margin-bottom: 0.5rem;"><i class="fas fa-prescription"></i> Recent Prescriptions</h4>
-                                        <div class="table-container">
-                                            <table class="table small">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr th:each="prescription : ${prescriptions.get(cd.id)}">
-                                                        <td th:text="${#temporals.format(prescription.createdAt, 'yyyy-MM-dd')}">Date</td>
-                                                        <td>
-                                                            <button class="btn btn-sm btn-link p-0 text-primary" th:onclick="'downloadPrescription(' + ${prescription.id} + ')'">
-                                                                <i class="fas fa-download"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </th:block>
-                            </div>
-
-                            <div class="mt-4 d-flex gap-2" style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-                                <a th:href="@{'/patient/appointment?doctor_id=' + ${cd.doctor.id}}" class="btn btn-primary flex-1 py-2" style="flex: 1; text-align: center;">
-                                    Book Slot
-                                </a>
-                                <button class="btn btn-secondary flex-1 py-2" style="flex: 1;" disabled title="In Development">
-                                    Message
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </th:block>
-
-                <th:block th:if="${#lists.isEmpty(current_doctors)}">
-                    <div class="card text-center py-5">
-                        <i class="fas fa-user-md fa-4x text-muted mb-4" style="font-size: 4rem; display: block; margin-bottom: 1.5rem; color: #ccc;"></i>
-                        <h3>No Doctors Assigned</h3>
-                        <p class="text-muted mb-4" style="margin-bottom: 1.5rem;">Start your journey by booking an appointment with our specialists.</p>
-                        <a th:href="@{/patient/appointment}" class="btn btn-primary px-5 py-3">Book Appointment</a>
-                    </div>
-                </th:block>
-            </div>
+      <!-- Header -->
+      <div class="dash-header" style="background:linear-gradient(135deg,#0ea5e9 0%,#10b981 100%);">
+        <div class="dash-header-text">
+          <h1><i class="fas fa-user-md"></i> My Healthcare Team</h1>
+          <p>Welcome, <strong th:text="${name}">Patient</strong>! Manage your assigned specialists below.</p>
         </div>
-    </main>
+        <div class="dash-header-badge">
+          <i class="fas fa-user-md"></i>
+          <span th:text="${current_doctors.size()} + ' doctor(s)'">0 doctors</span>
+        </div>
+      </div>
 
-    <footer th:replace="~{layout :: footer}"></footer>
-    <script th:replace="~{layout :: scripts}"></script>
+      <!-- Doctor Cards Grid -->
+      <th:block th:if="${not #lists.isEmpty(current_doctors)}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.5rem;">
+          <div class="doc-hero-card" th:each="cd : ${current_doctors}">
+            <div style="display:flex;align-items:flex-start;gap:1rem;">
+              <div class="doc-hero-avatar" th:text="${#strings.substring(cd.doctor.name,0,1)}">D</div>
+              <div style="flex:1;">
+                <div class="doc-hero-name" th:text="'Dr. ' + ${cd.doctor.name}">Dr. Name</div>
+                <div class="doc-hero-spec" th:text="${cd.doctor.specialization}">Specialization</div>
+                <div class="doc-info-row"><i class="fas fa-graduation-cap"></i> <span th:text="${cd.doctor.qualification}">MBBS</span></div>
+                <div class="doc-info-row"><i class="fas fa-briefcase"></i> <span th:text="${cd.doctor.experience} + ' years experience'">5 yrs</span></div>
+                <div class="doc-info-row"><i class="fas fa-phone"></i> <span th:text="${cd.doctor.phone}">0000</span></div>
+              </div>
+            </div>
 
-    <script>
-        async function removeDoctor(id) {
-            if (!confirm('Remove this doctor from your list?')) return;
-            const resp = await fetch(`/api/remove-current-doctor/${id}`, {
-                method: 'POST'
-            });
-            const data = await resp.json();
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert(data.error);
-            }
-        }
+            <!-- Prescriptions -->
+            <th:block th:if="${not #lists.isEmpty(prescriptions.get(cd.id))}">
+              <div class="doc-hero-divider"></div>
+              <div style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.06em;opacity:0.75;margin-bottom:0.5rem;font-weight:700;">
+                <i class="fas fa-prescription"></i> Recent Prescriptions
+              </div>
+              <div th:each="prescription : ${prescriptions.get(cd.id)}">
+                <div class="rx-item">
+                  <span class="rx-date"><i class="fas fa-calendar-alt"></i> <span th:text="${#temporals.format(prescription.createdAt,'dd MMM yyyy')}">Date</span></span>
+                  <button class="rx-download" th:onclick="'downloadPrescription(' + ${prescription.id} + ')'">
+                    <i class="fas fa-download"></i>
+                  </button>
+                </div>
+              </div>
+            </th:block>
 
-        function downloadPrescription(id) {
-            window.location.href = `/patient/prescription/download/${id}`;
-        }
-    </script>
-    <style>
-        .flex-1 { flex: 1; }
-        .gap-3 { gap: 1.5rem; }
-        .h-100 { height: 100%; }
-        .btn-link { background: none; border: none; cursor: pointer; }
-    </style>
+            <div class="doc-action-row">
+              <a th:href="@{'/patient/appointment?doctor_id=' + ${cd.doctor.id}}" class="doc-action-btn doc-btn-primary">
+                <i class="fas fa-calendar-plus"></i> Book Slot
+              </a>
+              <button class="doc-action-btn doc-btn-remove" th:onclick="'removeDoctor(' + ${cd.id} + ')'">
+                <i class="fas fa-user-times"></i> Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      </th:block>
+
+      <!-- Empty State -->
+      <th:block th:if="${#lists.isEmpty(current_doctors)}">
+        <div class="dash-card" style="padding:4rem 2rem;text-align:center;">
+          <div style="width:6rem;height:6rem;border-radius:50%;background:linear-gradient(135deg,#eef2ff,#e0f2fe);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:2.5rem;color:#818cf8;">
+            <i class="fas fa-user-md"></i>
+          </div>
+          <h3 style="font-size:1.25rem;margin-bottom:0.5rem;">No Doctors Assigned Yet</h3>
+          <p style="color:#64748b;margin-bottom:1.75rem;">Book your first appointment and your doctor will appear here.</p>
+          <a th:href="@{/patient/appointment}" class="auth-submit-btn" style="display:inline-flex;width:auto;padding:0.8rem 2rem;font-size:0.9rem;">
+            <i class="fas fa-calendar-plus"></i> Book Appointment
+          </a>
+        </div>
+      </th:block>
+
+    </div>
+  </div>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+<script th:replace="~{layout :: scripts}"></script>
+<script>
+  async function removeDoctor(id) {
+    if (!confirm('Remove this doctor from your list?')) return;
+    const resp = await fetch(`/api/remove-current-doctor/${id}`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) { alert(data.message); location.reload(); }
+    else { alert(data.error); }
+  }
+  function downloadPrescription(id) { window.location.href = `/patient/prescription/download/${id}`; }
+</script>
 </body>
-
 </html>

@@ -16,6 +16,7 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
     
     <!-- Extra CSS block -->
     <th:block th:replace="${extra_css}"></th:block>
@@ -24,45 +25,48 @@
 <body>
     <nav th:fragment="navbar" class="navbar">
         <div class="container">
-            <a th:href="@{/}" class="logo">
-                <i class="fas fa-heartbeat"></i> Medicalcare
+            <!-- Animated Logo -->
+            <a th:href="${session.role == 'admin'} ? @{/admin/dashboard} : (${session.role == 'doctor'} ? @{/doctor/dashboard} : (${session.role == 'hospital'} ? @{/hospital/dashboard} : (${session.role == 'patient'} ? @{/patient/dashboard} : @{/})))" class="logo">
+                <i class="fas fa-heartbeat nav-heartbeat"></i> Medicalcare
             </a>
+
             <div class="nav-links">
-                <!-- If logged in -->
+                <!-- ── LOGGED IN ── -->
                 <th:block th:if="${session.user_id != null}">
-                    <span><i class="fas fa-user"></i> <span th:text="${session.name}"></span></span>
-                    
+
                     <!-- Patient Nav Links -->
                     <th:block th:if="${session.role == 'patient'}">
                         <a th:href="@{/patient/dashboard}" th:classappend="${requestURI == '/patient/dashboard' ? 'active' : ''}">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                         <a th:href="@{/patient/medical-reports}" th:classappend="${requestURI == '/patient/medical-reports' ? 'active' : ''}">
-                            <i class="fas fa-file-medical"></i> Medical Reports
+                            <i class="fas fa-file-medical"></i> Records
+                        </a>
+                        <a th:href="@{/patient/prescriptions}" th:classappend="${requestURI == '/patient/prescriptions' ? 'active' : ''}">
+                            <i class="fas fa-file-prescription"></i> Prescriptions
                         </a>
                         <a th:href="@{/patient/appointment}" th:classappend="${requestURI == '/patient/appointment' ? 'active' : ''}">
-                            <i class="fas fa-calendar-plus"></i> Book Appointment
+                            <i class="fas fa-calendar-plus"></i> Book
                         </a>
-                        <!-- [NEW] AI Assistant Link -->
-                        <a th:href="@{/patient/ai-assistant}" th:classappend="${requestURI == '/patient/ai-assistant' ? 'active' : ''}" style="font-weight: 600; color: #9b59b6;">
-                            <i class="fas fa-robot"></i> AI Healthcare Hub
-                        </a>
-                        <a th:href="@{/patient/notifications}" class="nav-icon" title="Notifications">
-                            <i class="fas fa-bell"></i>
-                            <span class="badge" th:if="${unread_count > 0}" th:text="${unread_count}"></span>
+                        <a th:href="@{/patient/ai-assistant}" th:classappend="${requestURI == '/patient/ai-assistant' ? 'active' : ''}" class="nav-ai-link">
+                            <i class="fas fa-robot"></i> AI Hub
                         </a>
                         <a th:href="@{/patient/current-doctor}" th:classappend="${requestURI == '/patient/current-doctor' ? 'active' : ''}">
-                            <i class="fas fa-user-md"></i> Current Doctors
+                            <i class="fas fa-user-md"></i> Doctors
+                        </a>
+                        <a th:href="@{/patient/notifications}" class="nav-bell" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="nav-badge" th:if="${unread_count > 0}" th:text="${unread_count}"></span>
                         </a>
                     </th:block>
-                    
+
                     <!-- Doctor Nav Links -->
                     <th:block th:if="${session.role == 'doctor'}">
                         <a th:href="@{/doctor/dashboard}" th:classappend="${requestURI == '/doctor/dashboard' ? 'active' : ''}">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                     </th:block>
-                    
+
                     <!-- Admin Nav Links -->
                     <th:block th:if="${session.role == 'admin'}">
                         <a th:href="@{/admin/dashboard}" th:classappend="${requestURI == '/admin/dashboard' ? 'active' : ''}">
@@ -72,13 +76,35 @@
                             <i class="fas fa-history"></i> Audit Trail
                         </a>
                     </th:block>
-                    
-                    <a th:href="@{/logout}">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
+
+                    <!-- Hospital Nav Links -->
+                    <th:block th:if="${session.role == 'hospital'}">
+                        <a th:href="@{/hospital/dashboard}" th:classappend="${requestURI == '/hospital/dashboard' ? 'active' : ''}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a th:href="@{/hospital/announcements}" th:classappend="${requestURI == '/hospital/announcements' ? 'active' : ''}">
+                            <i class="fas fa-bullhorn"></i> Announcements
+                        </a>
+                    </th:block>
+
+                    <!-- User Chip -->
+                    <div class="nav-user-chip">
+                        <div class="nav-avatar"
+                             th:text="${#strings.substring(session.name, 0, 1)}"
+                             th:classappend="${session.role == 'admin'} ? 'nav-avatar-admin' : (${session.role == 'doctor'} ? 'nav-avatar-doctor' : (${session.role == 'hospital'} ? 'nav-avatar-doctor' : 'nav-avatar-patient'))">U</div>
+                        <div class="nav-user-info">
+                            <span class="nav-user-name" th:text="${session.name}">User</span>
+                            <span class="nav-user-role"
+                                  th:classappend="${session.role == 'admin'} ? 'role-admin' : (${session.role == 'doctor'} ? 'role-doctor' : 'role-patient')"
+                                  th:text="${#strings.capitalize(session.role)}">Role</span>
+                        </div>
+                        <a th:href="@{/logout}" class="nav-logout" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
                 </th:block>
-                
-                <!-- Guest Nav Links -->
+
+                <!-- ── GUEST ── -->
                 <th:block th:if="${session.user_id == null}">
                     <a th:href="@{/}" th:classappend="${requestURI == '/' ? 'active' : ''}">Home</a>
                     <a th:href="@{/login}" th:classappend="${requestURI == '/login' ? 'active' : ''}">Login</a>

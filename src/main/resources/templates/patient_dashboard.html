@@ -1,139 +1,233 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 
-<head th:replace="~{layout :: head('Patient Dashboard - Medical Care', ~{})}"></head>
+<head th:replace="~{layout :: head('Patient Dashboard - Medicalcare', ~{::style})}">
+<style>
+  @import url('/css/dashboard.css');
+</style>
+</head>
 
-<body>
-    <nav th:replace="~{layout :: navbar}"></nav>
-    <div th:replace="~{layout :: alerts}"></div>
+<body class="dash-page">
+  <nav th:replace="~{layout :: navbar}"></nav>
+  <div th:replace="~{layout :: alerts}"></div>
 
-    <main>
-        <div class="dashboard animate-fade">
-            <div class="container">
-                <header class="mb-4">
-                    <h1><i class="fas fa-user-circle"></i> Patient Dashboard</h1>
-                    <p>Welcome back, <strong><span th:text="${name}"></span></strong>! Here's your healthcare overview.</p>
-                </header>
+  <main>
+    <div class="dashboard animate-fade">
+      <div class="container">
 
-                <div class="stats-grid mb-4">
-                    <div class="stat-card">
-                        <i class="fas fa-user-md"></i>
-                        <div class="stat-info">
-                            <h3 th:text="${current_doctors.size()}">0</h3>
-                            <p>My Doctors</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i class="fas fa-calendar-check"></i>
-                        <div class="stat-info">
-                            <h3 th:text="${appointments.size()}">0</h3>
-                            <p>Appointments</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <i class="fas fa-prescription"></i>
-                        <div class="stat-info">
-                            <h3 th:text="${prescription_count}">0</h3>
-                            <p>Prescriptions</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card" style="border: 2px solid #9b59b6;">
-                        <i class="fas fa-robot" style="color: #9b59b6;"></i>
-                        <div class="stat-info">
-                            <h3>5</h3>
-                            <p>AI Healthcare Agents</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid-2-1 mb-4">
-                    <div class="card">
-                        <h3><i class="fas fa-bell"></i> Recent Notifications</h3>
-                        <th:block th:if="${not #lists.isEmpty(notifications)}">
-                            <ul class="list-group">
-                                <li class="list-item" th:each="notif : ${notifications}">
-                                    <div class="list-item-content">
-                                        <small><span th:text="${#strings.capitalize(notif.type)}">General</span> &bull; <span th:text="${#temporals.format(notif.createdAt, 'HH:mm')}">Time</span></small>
-                                        <p th:text="${notif.message}">Notification message</p>
-                                    </div>
-                                </li>
-                            </ul>
-                            <a th:href="@{/patient/notifications}" class="btn btn-secondary w-100 mt-3">
-                                View All Notifications
-                            </a>
-                        </th:block>
-                        <th:block th:if="${#lists.isEmpty(notifications)}">
-                            <p class="text-muted">No unread notifications.</p>
-                        </th:block>
-                    </div>
-
-                    <div class="card" style="background: linear-gradient(135deg, #ffffff 0%, #f9f6fc 100%); border-left: 5px solid #9b59b6;">
-                        <h3 style="color: #9b59b6;"><i class="fas fa-magic"></i> AI Hub Quick Actions</h3>
-                        <div class="d-flex flex-column gap-2">
-                            <a th:href="@{/patient/ai-assistant}" class="btn btn-primary" style="background-color: #9b59b6; border-color: #9b59b6;">
-                                <i class="fas fa-robot"></i> Open AI Healthcare Hub
-                            </a>
-                            <a th:href="@{/patient/appointment}" class="btn btn-secondary">
-                                <i class="fas fa-calendar-plus"></i> Book Appointment
-                            </a>
-                            <a th:href="@{/patient/medical-reports}" class="btn btn-secondary">
-                                <i class="fas fa-file-medical"></i> Medical Records
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid-1-1">
-                    <div class="card">
-                        <h3><i class="fas fa-user-md"></i> Current Doctors</h3>
-                        <th:block th:if="${not #lists.isEmpty(current_doctors)}">
-                            <ul class="list-group">
-                                <li class="list-item" th:each="cd : ${current_doctors}">
-                                    <div class="list-item-content">
-                                        <strong th:text="'Dr. ' + ${cd.doctor.name}">Doctor Name</strong>
-                                        <small th:text="${cd.doctor.specialization}">Specialization</small>
-                                    </div>
-                                    <a th:href="@{/patient/current-doctor}" class="btn btn-sm btn-secondary">View</a>
-                                </li>
-                            </ul>
-                        </th:block>
-                        <th:block th:if="${#lists.isEmpty(current_doctors)}">
-                            <p class="text-muted">No current doctors assigned yet.</p>
-                            <a th:href="@{/patient/appointment}" class="btn btn-primary mt-2">Book Your First Appointment</a>
-                        </th:block>
-                    </div>
-
-                    <div class="card">
-                        <h3><i class="fas fa-calendar-alt"></i> Recent Appointments</h3>
-                        <th:block th:if="${not #lists.isEmpty(appointments)}">
-                            <ul class="list-group">
-                                <li class="list-item" th:each="app : ${appointments}">
-                                    <div class="list-item-content">
-                                        <strong th:text="'Dr. ' + ${app.doctor.name}">Doctor Name</strong>
-                                        <small th:text="${app.date} + ' at ' + ${app.time}">Date & Time</small>
-                                        <div class="mt-2">
-                                            <span class="badge" th:classappend="${app.status == 'approved' ? 'badge-success' : (app.status == 'pending' ? 'badge-pending' : 'badge-danger')}" th:text="${#strings.capitalize(app.status)}">Status</span>
-                                            <span class="badge" th:classappend="${app.paymentStatus == 'paid' ? 'badge-success' : 'badge-pending'}" th:text="${#strings.capitalize(app.paymentStatus)}">Payment Status</span>
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
-                        </th:block>
-                        <th:block th:if="${#lists.isEmpty(appointments)}">
-                            <p class="text-muted">No appointments yet.</p>
-                            <a th:href="@{/patient/appointment}" class="btn btn-primary mt-2">Book an Appointment</a>
-                        </th:block>
-                    </div>
-                </div>
-            </div>
+        <!-- ── HEADER ── -->
+        <div class="dash-header">
+          <div class="dash-header-text">
+            <h1><i class="fas fa-user-circle"></i> Patient Dashboard</h1>
+            <p>Welcome back, <strong th:text="${name}">Patient</strong>! Here's your health overview for today.</p>
+          </div>
+          <div class="dash-header-badge">
+            <i class="fas fa-calendar-day"></i>
+            <span id="today-date"></span>
+          </div>
         </div>
-    </main>
 
-    <footer th:replace="~{layout :: footer}"></footer>
-    <script th:replace="~{layout :: scripts}"></script>
+        <!-- ── STAT CARDS ── -->
+        <div class="stats-grid">
+          <div class="pstat-card pstat-blue">
+            <div class="pstat-icon"><i class="fas fa-user-md"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${current_doctors.size()}">0</h3>
+              <p>My Doctors</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-sky">
+            <div class="pstat-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${appointments.size()}">0</h3>
+              <p>Appointments</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-green">
+            <div class="pstat-icon"><i class="fas fa-prescription-bottle-alt"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${prescription_count}">0</h3>
+              <p>Prescriptions</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-violet">
+            <div class="pstat-icon"><i class="fas fa-robot"></i></div>
+            <div class="pstat-body">
+              <h3>5</h3>
+              <p>AI Agents Active</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── MAIN GRID ── -->
+        <div class="dash-grid-3-1" style="margin-bottom:1.5rem;">
+
+          <!-- Notifications -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title">
+                <i class="fas fa-bell icon-amber"></i> Recent Notifications
+              </div>
+              <a th:href="@{/patient/notifications}" style="font-size:0.82rem;color:#4f46e5;font-weight:600;text-decoration:none;">
+                View all <i class="fas fa-arrow-right" style="font-size:0.7rem;"></i>
+              </a>
+            </div>
+            <div class="dash-card-body">
+              <th:block th:if="${not #lists.isEmpty(notifications)}">
+                <div class="dlist" th:each="notif : ${notifications}">
+                  <div class="notif-row">
+                    <div class="notif-dot"
+                         th:classappend="${notif.type == 'appointment'} ? 'icon-blue' : (${notif.type == 'checkup'} ? 'icon-green' : 'icon-amber')">
+                      <i th:class="${notif.type == 'appointment'} ? 'fas fa-calendar' : (${notif.type == 'checkup'} ? 'fas fa-stethoscope' : 'fas fa-info')"></i>
+                    </div>
+                    <div>
+                      <p th:text="${notif.message}">Notification message</p>
+                      <small>
+                        <span th:text="${#strings.capitalize(notif.type)}">Type</span>
+                        · <span th:text="${#temporals.format(notif.createdAt, 'hh:mm a')}">Time</span>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              </th:block>
+              <th:block th:if="${#lists.isEmpty(notifications)}">
+                <div class="empty-state">
+                  <i class="fas fa-bell-slash"></i>
+                  <p>No unread notifications right now.</p>
+                </div>
+              </th:block>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title">
+                <i class="fas fa-bolt icon-violet"></i> Quick Actions
+              </div>
+              <span class="ai-tag"><i class="fas fa-robot"></i> AI Powered</span>
+            </div>
+            <div class="dash-card-body">
+              <div class="quick-actions">
+                <a th:href="@{/patient/ai-assistant}" class="qa-btn qa-violet">
+                  <span class="qa-icon"><i class="fas fa-robot"></i></span>
+                  AI Healthcare Hub
+                  <i class="fas fa-chevron-right qa-arrow"></i>
+                </a>
+                <a th:href="@{/patient/appointment}" class="qa-btn qa-blue">
+                  <span class="qa-icon"><i class="fas fa-calendar-plus"></i></span>
+                  Book Appointment
+                  <i class="fas fa-chevron-right qa-arrow"></i>
+                </a>
+                <a th:href="@{/patient/medical-reports}" class="qa-btn qa-sky">
+                  <span class="qa-icon"><i class="fas fa-file-medical"></i></span>
+                  Medical Records
+                  <i class="fas fa-chevron-right qa-arrow"></i>
+                </a>
+                <a th:href="@{/patient/current-doctor}" class="qa-btn qa-green">
+                  <span class="qa-icon"><i class="fas fa-user-md"></i></span>
+                  My Doctors
+                  <i class="fas fa-chevron-right qa-arrow"></i>
+                </a>
+                <a th:href="@{/patient/notifications}" class="qa-btn qa-rose">
+                  <span class="qa-icon"><i class="fas fa-bell"></i></span>
+                  Notifications
+                  <i class="fas fa-chevron-right qa-arrow"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── LOWER GRID ── -->
+        <div class="dash-grid-2">
+
+          <!-- Current Doctors -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title">
+                <i class="fas fa-user-md icon-sky"></i> Current Doctors
+              </div>
+            </div>
+            <div class="dash-card-body">
+              <th:block th:if="${not #lists.isEmpty(current_doctors)}">
+                <ul class="dlist">
+                  <li class="dlist-item" th:each="cd : ${current_doctors}">
+                    <div class="dlist-avatar" style="background: linear-gradient(135deg,#0ea5e9,#10b981);">
+                      <span th:text="${#strings.substring(cd.doctor.name,0,1)}">D</span>
+                    </div>
+                    <div class="dlist-info">
+                      <strong th:text="'Dr. ' + ${cd.doctor.name}">Doctor Name</strong>
+                      <small th:text="${cd.doctor.specialization}">Specialization</small>
+                    </div>
+                    <a th:href="@{/patient/current-doctor}" class="btn-xs btn-xs-sky">View</a>
+                  </li>
+                </ul>
+              </th:block>
+              <th:block th:if="${#lists.isEmpty(current_doctors)}">
+                <div class="empty-state">
+                  <i class="fas fa-user-md"></i>
+                  <p>No doctors assigned yet.</p>
+                  <a th:href="@{/patient/appointment}" class="btn btn-primary" style="font-size:0.85rem;padding:0.6rem 1.25rem;">
+                    <i class="fas fa-calendar-plus"></i> Book Appointment
+                  </a>
+                </div>
+              </th:block>
+            </div>
+          </div>
+
+          <!-- Recent Appointments -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title">
+                <i class="fas fa-calendar-alt icon-blue"></i> Recent Appointments
+              </div>
+            </div>
+            <div class="dash-card-body">
+              <th:block th:if="${not #lists.isEmpty(appointments)}">
+                <ul class="dlist">
+                  <li class="dlist-item" th:each="app : ${appointments}">
+                    <div class="dlist-avatar" style="background: linear-gradient(135deg,#4f46e5,#0ea5e9);">
+                      <span th:text="${#strings.substring(app.doctor.name,0,1)}">D</span>
+                    </div>
+                    <div class="dlist-info">
+                      <strong th:text="'Dr. ' + ${app.doctor.name}">Doctor</strong>
+                      <small th:text="${app.date} + ' · ' + ${app.time}">Date &amp; Time</small>
+                      <div style="margin-top:0.35rem;display:flex;gap:0.4rem;flex-wrap:wrap;">
+                        <span class="sbadge"
+                          th:classappend="${app.status == 'approved'} ? 'sbadge-green' : (${app.status == 'pending'} ? 'sbadge-yellow' : 'sbadge-red')"
+                          th:text="${#strings.capitalize(app.status)}">Status</span>
+                        <span class="sbadge"
+                          th:classappend="${app.paymentStatus == 'paid'} ? 'sbadge-green' : 'sbadge-yellow'"
+                          th:text="${#strings.capitalize(app.paymentStatus)}">Payment</span>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </th:block>
+              <th:block th:if="${#lists.isEmpty(appointments)}">
+                <div class="empty-state">
+                  <i class="fas fa-calendar-times"></i>
+                  <p>No appointments yet.</p>
+                  <a th:href="@{/patient/appointment}" class="btn btn-primary" style="font-size:0.85rem;padding:0.6rem 1.25rem;">
+                    <i class="fas fa-calendar-plus"></i> Book Now
+                  </a>
+                </div>
+              </th:block>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{layout :: footer}"></footer>
+  <script th:replace="~{layout :: scripts}"></script>
+  <script>
+    // Show today's date in header badge
+    document.getElementById('today-date').textContent =
+      new Date().toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+  </script>
 </body>
-
 </html>

@@ -67,11 +67,106 @@ public class ApiController {
         if (doctorOpt.isPresent()) {
             User doctor = doctorOpt.get();
             if ("doctor".equalsIgnoreCase(doctor.getRole())) {
+                if (!doctor.isHospitalApproved()) {
+                    Map<String, Object> err = new HashMap<>();
+                    err.put("error", "Doctor must be approved by their affiliated hospital first.");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
+                }
                 doctor.setApproved(true);
                 userRepository.save(doctor);
                 Map<String, Object> body = new HashMap<>();
                 body.put("success", true);
                 body.put("message", "Doctor approved successfully!");
+                return ResponseEntity.ok(body);
+            }
+        }
+        Map<String, Object> err = new HashMap<>();
+        err.put("error", "Doctor not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
+
+    @PostMapping("/approve-hospital/{hospitalId}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> approveHospital(@PathVariable Long hospitalId) {
+        Optional<User> hospOpt = userRepository.findById(hospitalId);
+        if (hospOpt.isPresent()) {
+            User hospital = hospOpt.get();
+            if ("hospital".equalsIgnoreCase(hospital.getRole())) {
+                hospital.setApproved(true);
+                userRepository.save(hospital);
+                Map<String, Object> body = new HashMap<>();
+                body.put("success", true);
+                body.put("message", "Hospital approved successfully!");
+                return ResponseEntity.ok(body);
+            }
+        }
+        Map<String, Object> err = new HashMap<>();
+        err.put("error", "Hospital not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
+
+    @PostMapping("/reject-hospital/{hospitalId}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> rejectHospital(@PathVariable Long hospitalId) {
+        Optional<User> hospOpt = userRepository.findById(hospitalId);
+        if (hospOpt.isPresent()) {
+            User hospital = hospOpt.get();
+            if ("hospital".equalsIgnoreCase(hospital.getRole())) {
+                userRepository.delete(hospital);
+                Map<String, Object> body = new HashMap<>();
+                body.put("success", true);
+                body.put("message", "Hospital registration rejected and removed!");
+                return ResponseEntity.ok(body);
+            }
+        }
+        Map<String, Object> err = new HashMap<>();
+        err.put("error", "Hospital not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
+
+    @PostMapping("/hospital/approve-doctor/{doctorId}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> hospitalApproveDoctor(@PathVariable Long doctorId, @RequestBody Map<String, String> payload) {
+        Optional<User> doctorOpt = userRepository.findById(doctorId);
+        if (doctorOpt.isPresent()) {
+            User doctor = doctorOpt.get();
+            if ("doctor".equalsIgnoreCase(doctor.getRole())) {
+                String message = payload.getOrDefault("approvalMessage", "Approved by Hospital");
+                doctor.setHospitalApproved(true);
+                doctor.setHospitalApprovalMessage(message);
+                userRepository.save(doctor);
+
+                Map<String, Object> body = new HashMap<>();
+                body.put("success", true);
+                body.put("message", "Doctor approved by hospital! Awaiting final admin approval.");
+                return ResponseEntity.ok(body);
+            }
+        }
+        Map<String, Object> err = new HashMap<>();
+        err.put("error", "Doctor not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
+    }
+
+    @PostMapping("/doctor/toggle-availability")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> toggleAvailability(HttpSession session) {
+        Long doctorId = (Long) session.getAttribute("user_id");
+        if (doctorId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Optional<User> docOpt = userRepository.findById(doctorId);
+        if (docOpt.isPresent()) {
+            User doc = docOpt.get();
+            if ("doctor".equalsIgnoreCase(doc.getRole())) {
+                String currentStatus = doc.getAvailabilityStatus();
+                String newStatus = "Active".equalsIgnoreCase(currentStatus) ? "On Leave" : "Active";
+                doc.setAvailabilityStatus(newStatus);
+                userRepository.save(doc);
+
+                Map<String, Object> body = new HashMap<>();
+                body.put("success", true);
+                body.put("status", newStatus);
+                body.put("message", "Status updated to: " + newStatus);
                 return ResponseEntity.ok(body);
             }
         }

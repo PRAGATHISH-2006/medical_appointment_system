@@ -1,60 +1,163 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{layout :: head('Notifications - Medicalcare', ~{::style})}">
+<style>
+@import url('/css/dashboard.css');
+.notif-card {
+  display:flex;align-items:flex-start;gap:1rem;
+  padding:1.1rem 1.25rem;
+  border-radius:0.875rem;
+  border:1px solid #e2e8f0;
+  background:white;
+  margin-bottom:0.75rem;
+  transition:all 0.25s ease;
+  animation:notifIn 0.4s ease both;
+  position:relative;
+  overflow:hidden;
+}
+.notif-card:nth-child(1){ animation-delay:0.04s; }
+.notif-card:nth-child(2){ animation-delay:0.08s; }
+.notif-card:nth-child(3){ animation-delay:0.12s; }
+.notif-card:nth-child(n+4){ animation-delay:0.16s; }
+@keyframes notifIn {
+  from{ opacity:0;transform:translateX(-14px); }
+  to  { opacity:1;transform:translateX(0); }
+}
+.notif-card.unread { border-left:4px solid #4f46e5;background:#fafbff; }
+.notif-card.read   { opacity:0.7; }
+.notif-card:hover  { box-shadow:0 4px 16px rgba(0,0,0,0.08);transform:translateX(3px); }
+.notif-icon-wrap {
+  width:2.75rem;height:2.75rem;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;
+}
+.notif-content { flex:1;min-width:0; }
+.notif-meta   { display:flex;align-items:center;gap:0.6rem;margin-bottom:0.35rem;flex-wrap:wrap; }
+.notif-msg    { font-size:0.9rem;color:#334155;line-height:1.5; }
+.notif-time   { font-size:0.75rem;color:#94a3b8;margin-top:0.25rem; }
+.mark-read-btn {
+  flex-shrink:0;padding:0.3rem 0.75rem;font-size:0.75rem;font-weight:700;
+  border-radius:2rem;border:none;cursor:pointer;
+  background:#eef2ff;color:#4f46e5;transition:all 0.2s;font-family:'Inter',sans-serif;
+}
+.mark-read-btn:hover { background:#4f46e5;color:white; }
+.notif-type-appointment { background:#eef2ff;color:#4f46e5; }
+.notif-type-checkup     { background:#d1fae5;color:#065f46; }
+.notif-type-refill      { background:#fef3c7;color:#92400e; }
+.notif-type-general     { background:#f1f5f9;color:#475569; }
+</style>
+</head>
+<body class="dash-page">
+<nav th:replace="~{layout :: navbar}"></nav>
+<div th:replace="~{layout :: alerts}"></div>
+<main>
+  <div class="dashboard animate-fade">
+    <div class="container" style="max-width:760px;">
 
-<head th:replace="~{layout :: head('Notifications - Medicalcare', ~{})}"></head>
-
-<body>
-    <nav th:replace="~{layout :: navbar}"></nav>
-    <div th:replace="~{layout :: alerts}"></div>
-
-    <main>
-        <div class="dashboard animate-fade">
-            <div class="container" style="max-width: 800px;">
-                <header class="mb-4">
-                    <h1><i class="fas fa-bell"></i> Notifications Hub</h1>
-                    <p>Track medication reminders, checkups, and doctor bookings.</p>
-                </header>
-
-                <div class="card">
-                    <th:block th:if="${not #lists.isEmpty(notifications)}">
-                        <ul class="list-group">
-                            <li class="list-item" th:each="notif : ${notifications}" th:id="'notif-' + ${notif.id}" th:classappend="${notif.read ? 'read' : 'unread'}" style="padding: 1.2rem; border-bottom: 1px solid var(--border); transition: background-color 0.2s;">
-                                <div class="list-item-content" style="flex-grow: 1;">
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <span class="badge" th:classappend="${notif.type == 'appointment' ? 'badge-primary' : (notif.type == 'refill' ? 'badge-warning' : (notif.type == 'checkup' ? 'badge-danger' : 'badge-info'))}" th:text="${#strings.toUpperCase(notif.type)}">TYPE</span>
-                                        <small class="text-muted" th:text="${#temporals.format(notif.createdAt, 'yyyy-MM-dd HH:mm')}">Date & Time</small>
-                                    </div>
-                                    <p class="mb-0" th:text="${notif.message}" style="font-size: 1rem; color: var(--text-dark);">Notification message</p>
-                                </div>
-                                <div th:if="${!notif.read}" class="list-item-actions">
-                                    <button class="btn btn-sm btn-secondary mark-read-btn" th:data-notif-id="${notif.id}">
-                                        <i class="fas fa-check"></i> Read
-                                    </button>
-                                </div>
-                            </li>
-                        </ul>
-                    </th:block>
-                    <th:block th:if="${#lists.isEmpty(notifications)}">
-                        <div class="text-center py-4 text-muted">
-                            <i class="far fa-bell-slash fa-3x mb-3 text-light-gray"></i>
-                            <p>You have no notifications yet.</p>
-                        </div>
-                    </th:block>
-                </div>
-            </div>
+      <!-- Header -->
+      <div class="dash-header" style="background:linear-gradient(135deg,#f59e0b 0%,#f43f5e 100%);">
+        <div class="dash-header-text">
+          <h1><i class="fas fa-bell"></i> Notification Hub</h1>
+          <p>Track medication reminders, checkups, and appointment updates.</p>
         </div>
-    </main>
+        <div class="dash-header-badge">
+          <i class="fas fa-bell"></i>
+          <span th:text="${notifications.size()} + ' alerts'">0</span>
+        </div>
+      </div>
 
-    <footer th:replace="~{layout :: footer}"></footer>
-    <script th:replace="~{layout :: scripts}"></script>
-    <style>
-        .unread { background-color: #f7fbfe; border-left: 4px solid var(--primary); }
-        .read { opacity: 0.8; }
-        .badge-primary { background: #3498db !important; }
-        .badge-warning { background: #f1c40f !important; }
-        .badge-danger { background: #e74c3c !important; }
-        .badge-info { background: #95a5a6 !important; }
-    </style>
+      <!-- Filter bar -->
+      <div class="dash-card" style="margin-bottom:1.25rem;padding:0.875rem 1.25rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+          <span style="font-size:0.8rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">Filter:</span>
+          <button onclick="filterNotifs('all')"          class="filter-btn active" id="f-all">All</button>
+          <button onclick="filterNotifs('appointment')"  class="filter-btn"        id="f-appointment"><i class="fas fa-calendar"></i> Appointments</button>
+          <button onclick="filterNotifs('checkup')"      class="filter-btn"        id="f-checkup"><i class="fas fa-stethoscope"></i> Checkups</button>
+          <button onclick="filterNotifs('refill')"       class="filter-btn"        id="f-refill"><i class="fas fa-pills"></i> Refills</button>
+          <button onclick="filterNotifs('general')"      class="filter-btn"        id="f-general"><i class="fas fa-info"></i> General</button>
+        </div>
+      </div>
+      <style>
+        .filter-btn{padding:0.3rem 0.85rem;border-radius:2rem;border:2px solid #e2e8f0;background:white;font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:0.35rem;}
+        .filter-btn:hover{border-color:#4f46e5;color:#4f46e5;}
+        .filter-btn.active{background:#4f46e5;color:white;border-color:#4f46e5;}
+      </style>
+
+      <!-- Notifications List -->
+      <th:block th:if="${not #lists.isEmpty(notifications)}">
+        <div id="notif-list">
+          <div class="notif-card"
+               th:each="notif : ${notifications}"
+               th:id="'notif-' + ${notif.id}"
+               th:classappend="${notif.read ? 'read' : 'unread'}"
+               th:data-type="${notif.type}">
+
+            <!-- Icon -->
+            <div class="notif-icon-wrap"
+                 th:classappend="${notif.type == 'appointment'} ? 'notif-type-appointment' : (${notif.type == 'checkup'} ? 'notif-type-checkup' : (${notif.type == 'refill'} ? 'notif-type-refill' : 'notif-type-general'))">
+              <i th:class="${notif.type == 'appointment'} ? 'fas fa-calendar-check' : (${notif.type == 'checkup'} ? 'fas fa-stethoscope' : (${notif.type == 'refill'} ? 'fas fa-pills' : 'fas fa-info-circle'))"></i>
+            </div>
+
+            <div class="notif-content">
+              <div class="notif-meta">
+                <span class="sbadge"
+                      th:classappend="${notif.type == 'appointment'} ? 'sbadge-blue' : (${notif.type == 'checkup'} ? 'sbadge-green' : (${notif.type == 'refill'} ? 'sbadge-yellow' : 'sbadge-blue'))"
+                      th:text="${#strings.toUpperCase(notif.type)}">TYPE</span>
+                <span th:if="${!notif.read}" class="sbadge" style="background:#fee2e2;color:#991b1b;font-size:0.65rem;">NEW</span>
+              </div>
+              <p class="notif-msg" th:text="${notif.message}">Message</p>
+              <div class="notif-time">
+                <i class="fas fa-clock"></i>
+                <span th:text="${#temporals.format(notif.createdAt, 'dd MMM yyyy · hh:mm a')}">Time</span>
+              </div>
+            </div>
+
+            <!-- Mark read -->
+            <button class="mark-read-btn" th:if="${!notif.read}" th:data-notif-id="${notif.id}">
+              <i class="fas fa-check"></i> Mark Read
+            </button>
+          </div>
+        </div>
+      </th:block>
+
+      <th:block th:if="${#lists.isEmpty(notifications)}">
+        <div class="dash-card">
+          <div class="empty-state" style="padding:4rem 2rem;">
+            <i class="fas fa-bell-slash" style="font-size:3rem;color:#f59e0b;opacity:0.5;margin-bottom:1.25rem;"></i>
+            <p>You're all caught up! No notifications at the moment. 🎉</p>
+          </div>
+        </div>
+      </th:block>
+
+    </div>
+  </div>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+<script th:replace="~{layout :: scripts}"></script>
+<script>
+  // Filter by type
+  function filterNotifs(type) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('f-' + type).classList.add('active');
+    document.querySelectorAll('.notif-card').forEach(card => {
+      const show = type === 'all' || card.dataset.type === type;
+      card.style.display = show ? 'flex' : 'none';
+    });
+  }
+
+  // Mark read
+  document.addEventListener('click', async e => {
+    const btn = e.target.closest('.mark-read-btn');
+    if (!btn) return;
+    const id = btn.dataset.notifId;
+    const resp = await fetch(`/patient/notifications/read/${id}`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      const card = document.getElementById(`notif-${id}`);
+      card.classList.remove('unread');
+      card.classList.add('read');
+      btn.remove();
+    }
+  });
+</script>
 </body>
-
 </html>

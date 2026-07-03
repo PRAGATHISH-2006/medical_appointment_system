@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Hospital Profile - Medicalcare', ~{::style})}">
+<style>
+  @import url('/css/dashboard.css');
+  /* Public Profile styling */
+  .profile-grid {
+    display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; margin-top: 1.5rem;
+  }
+  .hosp-sidebar-card {
+    background: white; border-radius: 1.25rem; padding: 2rem 1.5rem; border: 1px solid #e2e8f0;
+    text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  }
+  .hosp-logo {
+    width: 5rem; height: 5rem; border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #14b8a6);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; margin: 0 auto 1.25rem;
+    box-shadow: 0 8px 16px rgba(16,185,129,0.25);
+  }
+  .hosp-title {
+    font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.35rem; color: #1e293b; margin-bottom: 0.5rem;
+  }
+  .hosp-tagline {
+    font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem;
+  }
+  .hosp-meta-row {
+    display: flex; align-items: flex-start; gap: 0.75rem; text-align: left; margin-bottom: 1.25rem; font-size: 0.88rem; color: #475569;
+  }
+  .hosp-meta-row i {
+    color: #10b981; font-size: 1.1rem; margin-top: 2px;
+  }
+  /* Chat desk styling */
+  .chat-desk {
+    background: white; border-radius: 1.25rem; border: 1px solid #e2e8f0;
+    display: flex; flex-direction: column; height: 350px; overflow: hidden; margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  }
+  .chat-header-desk {
+    padding: 0.75rem 1.25rem; background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+    color: white; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .chat-box-messages {
+    flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; background: #fafbff;
+  }
+  .chat-box-input-area {
+    display: flex; border-top: 1px solid #e2e8f0; background: white; padding: 0.5rem;
+  }
+  .chat-box-input-area textarea {
+    flex: 1; border: none; padding: 0.5rem 0.75rem; font-size: 0.88rem; font-family: inherit; resize: none; outline: none; height: 32px;
+  }
+  .chat-box-send-btn {
+    background: #10b981; color: white; border: none; border-radius: 0.5rem; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s;
+  }
+  .chat-box-send-btn:hover { background: #0d9488; }
+
+  /* Doc cards */
+  .pdoc-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;
+  }
+  .pdoc-card {
+    background: white; border-radius: 1rem; border: 1px solid #e2e8f0; padding: 1.25rem;
+    display: flex; align-items: center; gap: 0.85rem; transition: all 0.25s ease;
+  }
+  .pdoc-card:hover {
+    transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.06); border-color: #10b981;
+  }
+  .pdoc-avatar {
+    width: 2.8rem; height: 2.8rem; border-radius: 50%;
+    background: linear-gradient(135deg, #10b981, #0ea5e9);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem; flex-shrink: 0;
+  }
+</style>
+</head>
+
+<body class="dash-page">
+  <nav th:replace="~{layout :: navbar}"></nav>
+  <div th:replace="~{layout :: alerts}"></div>
+
+  <main>
+    <div class="dashboard animate-fade">
+      <div class="container">
+
+        <!-- ── HEADER ── -->
+        <div class="dash-header" style="background: linear-gradient(135deg, #4f46e5 0%, #10b981 100%);">
+          <div class="dash-header-text">
+            <h1><i class="fas fa-hospital-alt"></i> Hospital Directory</h1>
+            <p>View registered healthcare facilities, specialties, and schedule direct consultations.</p>
+          </div>
+          <a th:if="${session.role != 'admin'}" th:href="@{/patient/appointment}" class="dash-header-badge" style="text-decoration:none;">
+            <i class="fas fa-calendar-plus"></i> Book Slots
+          </a>
+        </div>
+
+        <!-- ── PROFILE GRID ── -->
+        <div class="profile-grid">
+
+          <!-- Left Sidebar Details -->
+          <div>
+            <div class="hosp-sidebar-card">
+              <div class="hosp-logo"><i class="fas fa-hospital"></i></div>
+              <h2 class="hosp-title" th:text="${hospital.name}">City Hospital</h2>
+              <div class="hosp-tagline">Registered Medical Center</div>
+
+              <div class="hosp-meta-row">
+                <i class="fas fa-map-marker-alt"></i>
+                <div>
+                  <strong>Address</strong>
+                  <p style="font-size:0.8rem;color:#64748b;margin-top:0.15rem;" th:text="${hospital.address}">123 Healthcare Blvd</p>
+                </div>
+              </div>
+
+              <div class="hosp-meta-row">
+                <i class="fas fa-phone-alt"></i>
+                <div>
+                  <strong>Emergency Hotline</strong>
+                  <p style="font-size:0.8rem;color:#64748b;margin-top:0.15rem;" th:text="${hospital.phone}">+91 98765-43210</p>
+                </div>
+              </div>
+
+              <div class="hosp-meta-row">
+                <i class="fas fa-stethoscope"></i>
+                <div>
+                  <strong>Key Specialties</strong>
+                  <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.35rem;">
+                    <span th:each="spec : ${#strings.arraySplit(hospital.hospitalSpecialties != null ? hospital.hospitalSpecialties : 'General Medicine', ',')}"
+                          class="sbadge sbadge-blue"
+                          style="font-size:0.68rem;padding:0.15rem 0.5rem;" th:text="${spec.trim()}">Spec</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Content Area -->
+          <div>
+
+            <!-- Hospital Revenue & Analytics + Registration Info -->
+            <div class="dash-card" style="margin-bottom:1.5rem;">
+              <div class="dash-card-header">
+                <div class="dash-card-title"><i class="fas fa-chart-line icon-blue"></i> Hospital Analytics &amp; Registered Details</div>
+              </div>
+              <div class="dash-card-body">
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom:1.5rem;">
+                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.75rem; padding:1rem; text-align:center;">
+                    <span style="display:block; font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase;">Total Revenue</span>
+                    <strong style="font-size:1.45rem; color:#10b981; display:block; margin-top:0.25rem;" th:text="'₹' + ${#numbers.formatDecimal(stats.total_revenue, 1, 0)}">₹0</strong>
+                  </div>
+                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.75rem; padding:1rem; text-align:center;">
+                    <span style="display:block; font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase;">Total Patients</span>
+                    <strong style="font-size:1.45rem; color:#3b82f6; display:block; margin-top:0.25rem;" th:text="${stats.total_patients}">0</strong>
+                  </div>
+                  <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.75rem; padding:1rem; text-align:center;">
+                    <span style="display:block; font-size:0.75rem; color:#64748b; font-weight:600; text-transform:uppercase;">Appointments</span>
+                    <strong style="font-size:1.45rem; color:#8b5cf6; display:block; margin-top:0.25rem;" th:text="${stats.total_appointments}">0</strong>
+                  </div>
+                </div>
+
+                <!-- Profile Registration Details -->
+                <div style="border-top:1px solid #e2e8f0; padding-top:1rem; margin-top:1rem;">
+                  <h4 style="font-size:0.9rem; color:#1e293b; font-weight:700; margin-bottom:0.75rem;">Registration Profile</h4>
+                  <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; font-size:0.83rem;">
+                    <div>
+                      <span style="color:#64748b;">Hospital Type:</span>
+                      <strong style="color:#334155;" th:text="${hospital.hospitalType != null ? hospital.hospitalType : 'N/A'}">General</strong>
+                    </div>
+                    <div>
+                      <span style="color:#64748b;">License Number:</span>
+                      <strong style="color:#334155;" th:text="${hospital.licenseNumber != null ? hospital.licenseNumber : 'N/A'}">LIC-0000</strong>
+                    </div>
+                    <div>
+                      <span style="color:#64748b;">Bed Count Capacity:</span>
+                      <strong style="color:#334155;" th:text="${hospital.bedCount != null ? hospital.bedCount : 'N/A'}">0</strong>
+                    </div>
+                    <div>
+                      <span style="color:#64748b;">Emergency Services:</span>
+                      <strong style="color:#334155;" th:text="${hospital.emergencyServices != null ? hospital.emergencyServices : 'N/A'}">Yes</strong>
+                    </div>
+                    <div style="grid-column: span 2;">
+                      <span style="color:#64748b;">Operating Hours:</span>
+                      <strong style="color:#334155;" th:text="${hospital.operatingHours != null ? hospital.operatingHours : 'N/A'}">24/7</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bulletins/Alerts (Announcements) -->
+            <div class="dash-card" style="margin-bottom:1.5rem;" th:if="${not #lists.isEmpty(announcements)}">
+              <div class="dash-card-header">
+                <div class="dash-card-title"><i class="fas fa-bell icon-amber"></i> Hospital Alerts &amp; Announcements</div>
+              </div>
+              <div class="dash-card-body">
+                <div th:each="ann : ${announcements}" style="border-bottom:1px solid #e2e8f0; padding-bottom:0.85rem; margin-bottom:0.85rem;">
+                  <div style="font-size:0.72rem; color:#94a3b8; margin-bottom:0.25rem;">
+                    <i class="far fa-clock"></i> <span th:text="${#temporals.format(ann.createdAt, 'dd-MMM-yyyy hh:mm a')}">Date</span>
+                  </div>
+                  <strong style="font-size:0.95rem; color:#1e293b;" th:text="${ann.title}">Title</strong>
+                  <p style="font-size:0.85rem; color:#475569; line-height:1.5; white-space:pre-line; margin-top:0.35rem;" th:text="${ann.message}">Message</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Doctors List -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title"><i class="fas fa-user-md icon-green"></i> Certified Specialists</div>
+                <span class="sbadge sbadge-green" th:text="${doctors.size()} + ' active'">0</span>
+              </div>
+              <div class="dash-card-body">
+                <th:block th:if="${not #lists.isEmpty(doctors)}">
+                  <div class="pdoc-grid">
+                    <div th:each="doc : ${doctors}" class="pdoc-card">
+                      <div class="pdoc-avatar" th:text="${#strings.substring(doc.name,0,1)}">D</div>
+                      <div style="flex:1;">
+                        <strong style="display:block;font-size:0.92rem;color:#1e293b;" th:text="'Dr. ' + ${doc.name}">Dr. Roy</strong>
+                        <span style="font-size:0.72rem;background:#eef2ff;color:#4f46e5;border-radius:2rem;padding:0.1rem 0.5rem;font-weight:700;" th:text="${doc.specialization}">Spec</span>
+                        <div style="font-size:0.75rem;color:#64748b;margin-top:0.3rem;">
+                          <i class="fas fa-graduation-cap"></i> <span th:text="${doc.qualification}">MBBS</span>
+                          &nbsp;·&nbsp; <i class="fas fa-rupee-sign"></i> <span th:text="${doc.consultationFee}">Fee</span>
+                        </div>
+                      </div>
+                      <a th:if="${session.role != 'admin'}" th:href="@{/patient/appointment}" class="btn-xs btn-xs-success" style="padding:0.4rem 0.8rem;text-decoration:none;"><i class="fas fa-calendar-plus"></i> Book</a>
+                    </div>
+                  </div>
+                </th:block>
+                <th:block th:if="${#lists.isEmpty(doctors)}">
+                  <div class="empty-state">
+                    <i class="fas fa-user-md" style="opacity:0.3;"></i>
+                    <p>No specialists registered currently.</p>
+                  </div>
+                </th:block>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{layout :: footer}"></footer>
+  <script th:replace="~{layout :: scripts}"></script>
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const hospitalName = /*[[${hospital.name}]]*/ 'City Hospital';
+    /*]]>*/
+
+    function handleChatKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendHospitalChat();
+      }
+    }
+
+    let chatTyping = false;
+    async function sendHospitalChat() {
+      if (chatTyping) return;
+      const inputEl = document.getElementById('chat-box-input');
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      inputEl.value = '';
+      addHospMessage(text, 'user');
+
+      chatTyping = true;
+      const loaderId = addHospTyping();
+
+      try {
+        // Prepend specific context for the dynamic prompt to focus on this hospital
+        const queryText = `Regarding ${hospitalName} hospital: ${text}`;
+        const response = await fetch('/api/ai/gemini-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent: 'hospital', message: queryText })
+        });
+        const data = await response.json();
+        removeHospTyping(loaderId);
+        chatTyping = false;
+
+        if (data.success) {
+          addHospMessage(data.reply, 'ai');
+        } else {
+          addHospMessage('Sorry, I experienced an error. Please try again.', 'ai');
+        }
+      } catch (err) {
+        console.error(err);
+        removeHospTyping(loaderId);
+        chatTyping = false;
+        addHospMessage('⚠️ Network error. Please try again.', 'ai');
+      }
+    }
+
+    function addHospMessage(text, sender) {
+      const msgs = document.getElementById('chat-box-messages');
+      const row = document.createElement('div');
+      row.className = `msg-row ${sender}`;
+
+      const avatarHtml = sender === 'ai'
+        ? `<div class="msg-avatar ai-av" style="width:1.6rem;height:1.6rem;font-size:0.7rem;"><i class="fas fa-robot"></i></div>`
+        : `<div class="msg-avatar user-av" style="width:1.6rem;height:1.6rem;font-size:0.7rem;"><i class="fas fa-user"></i></div>`;
+
+      // Simplified markdown-like lists conversion
+      let cleanText = text
+        .replace(/\n\n/g, '<br>')
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/- (.*?)(?:<br>|$)/g, '<li>$1</li>');
+
+      if (cleanText.includes('<li>')) {
+        cleanText = cleanText.replace(/(<li>.*?<\/li>)/g, '<ul>$1</ul>').replace(/<\/ul><ul>/g, '');
+      }
+
+      row.innerHTML = `${avatarHtml}<div class="bubble" style="font-size:0.82rem;padding:0.6rem 0.8rem;">${cleanText}</div>`;
+      msgs.appendChild(row);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function addHospTyping() {
+      const msgs = document.getElementById('chat-box-messages');
+      const id = 'typing-' + Date.now();
+      const row = document.createElement('div');
+      row.id = id;
+      row.className = 'msg-row ai';
+      row.innerHTML = `<div class="msg-avatar ai-av" style="width:1.6rem;height:1.6rem;font-size:0.7rem;"><i class="fas fa-robot"></i></div>
+        <div class="bubble" style="padding:0.5rem 0.8rem;display:flex;gap:3px;align-items:center;">
+          <span class="typing-dot" style="width:5px;height:5px;"></span>
+          <span class="typing-dot" style="width:5px;height:5px;"></span>
+          <span class="typing-dot" style="width:5px;height:5px;"></span>
+        </div>`;
+      msgs.appendChild(row);
+      msgs.scrollTop = msgs.scrollHeight;
+      return id;
+    }
+
+    function removeHospTyping(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+  </script>
+</body>
+</html>

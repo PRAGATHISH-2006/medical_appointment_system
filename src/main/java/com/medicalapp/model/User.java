@@ -36,6 +36,22 @@ public class User {
     @Column(name = "consultation_fee")
     private double consultationFee = 0.0;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hospital_id")
+    private User hospital;
+
+    @Column(name = "hospital_approved")
+    private boolean hospitalApproved = false;
+
+    @Column(name = "hospital_approval_message", length = 1000)
+    private String hospitalApprovalMessage;
+
+    @Column(name = "availability_status")
+    private String availabilityStatus = "Active";
+
+    @Column(name = "hospital_specialties", length = 500)
+    private String hospitalSpecialties;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -75,6 +91,21 @@ public class User {
 
     public double getConsultationFee() { return consultationFee; }
     public void setConsultationFee(double consultationFee) { this.consultationFee = consultationFee; }
+
+    public User getHospital() { return hospital; }
+    public void setHospital(User hospital) { this.hospital = hospital; }
+
+    public boolean isHospitalApproved() { return hospitalApproved; }
+    public void setHospitalApproved(boolean hospitalApproved) { this.hospitalApproved = hospitalApproved; }
+
+    public String getHospitalApprovalMessage() { return hospitalApprovalMessage; }
+    public void setHospitalApprovalMessage(String hospitalApprovalMessage) { this.hospitalApprovalMessage = hospitalApprovalMessage; }
+
+    public String getAvailabilityStatus() { return availabilityStatus; }
+    public void setAvailabilityStatus(String availabilityStatus) { this.availabilityStatus = availabilityStatus; }
+
+    public String getHospitalSpecialties() { return hospitalSpecialties; }
+    public void setHospitalSpecialties(String hospitalSpecialties) { this.hospitalSpecialties = hospitalSpecialties; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

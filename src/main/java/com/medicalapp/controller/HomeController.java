@@ -40,7 +40,8 @@ public class HomeController {
     }
 
     @GetMapping("/register")
-    public String register() {
+    public String register(Model model) {
+        model.addAttribute("hospitals", userRepository.findByRoleAndIsApproved("hospital", true));
         return "register";
     }
 
@@ -56,6 +57,8 @@ public class HomeController {
                                  @RequestParam(required = false, defaultValue = "") String qualification,
                                  @RequestParam(required = false, defaultValue = "") String experience,
                                  @RequestParam(required = false, defaultValue = "0.0") double consultation_fee,
+                                 @RequestParam(required = false) Long hospital_id,
+                                 @RequestParam(required = false, defaultValue = "") String hospital_specialties,
                                  RedirectAttributes redirectAttributes) {
 
         if (!password.equals(confirm_password)) {
@@ -80,8 +83,15 @@ public class HomeController {
             user.setSpecialization(specialization);
             user.setQualification(qualification);
             user.setExperience(experience);
-            user.setApproved(false); // Doctors require admin approval
+            user.setApproved(false);
+            user.setHospitalApproved(false);
             user.setConsultationFee(consultation_fee);
+            if (hospital_id != null) {
+                user.setHospital(userRepository.findById(hospital_id).orElse(null));
+            }
+        } else if ("hospital".equalsIgnoreCase(role)) {
+            user.setApproved(false); // Hospitals require admin approval
+            user.setHospitalSpecialties(hospital_specialties);
         } else {
             user.setApproved(true);
         }
@@ -89,6 +99,8 @@ public class HomeController {
         userRepository.save(user);
 
         if ("doctor".equalsIgnoreCase(role)) {
+            redirectAttributes.addFlashAttribute("success", "Registration successful! Please wait for hospital and admin approval.");
+        } else if ("hospital".equalsIgnoreCase(role)) {
             redirectAttributes.addFlashAttribute("success", "Registration successful! Please wait for admin approval.");
         } else {
             redirectAttributes.addFlashAttribute("success", "Registration successful! Please login.");
@@ -113,9 +125,20 @@ public class HomeController {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             if (HashUtils.checkPassword(password, user.getPassword())) {
-                if ("doctor".equalsIgnoreCase(user.getRole()) && !user.isApproved()) {
-                    redirectAttributes.addFlashAttribute("warning", "Your account is pending approval from admin.");
-                    return "redirect:/login";
+                if ("doctor".equalsIgnoreCase(user.getRole())) {
+                    if (!user.isHospitalApproved()) {
+                        redirectAttributes.addFlashAttribute("warning", "Your account is pending approval from your selected hospital.");
+                        return "redirect:/login";
+                    }
+                    if (!user.isApproved()) {
+                        redirectAttributes.addFlashAttribute("warning", "Your account has been approved by the hospital and is pending final activation from the admin.");
+                        return "redirect:/login";
+                    }
+                } else if ("hospital".equalsIgnoreCase(user.getRole())) {
+                    if (!user.isApproved()) {
+                        redirectAttributes.addFlashAttribute("warning", "Your hospital account is pending approval from the admin.");
+                        return "redirect:/login";
+                    }
                 }
 
                 session.setAttribute("user_id", user.getId());
@@ -129,6 +152,8 @@ public class HomeController {
                     return "redirect:/doctor/dashboard";
                 } else if ("admin".equalsIgnoreCase(user.getRole())) {
                     return "redirect:/admin/dashboard";
+                } else if ("hospital".equalsIgnoreCase(user.getRole())) {
+                    return "redirect:/hospital/dashboard";
                 }
             }
         }

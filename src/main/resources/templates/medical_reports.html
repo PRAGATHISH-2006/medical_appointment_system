@@ -1,304 +1,358 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{layout :: head('Medical Records - Medicalcare', ~{::style})}">
+<style>
+@import url('/css/dashboard.css');
+/* drag-drop zone */
+.upload-zone {
+  border: 2.5px dashed #c7d2fe;
+  border-radius: 1rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f5f7ff;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: #4f46e5;
+  background: #eef2ff;
+  transform: scale(1.01);
+}
+.upload-zone i { font-size: 2.5rem; color: #818cf8; margin-bottom: 1rem; display: block; }
+.upload-zone p { color: #64748b; margin: 0; }
+.upload-zone strong { color: #4f46e5; }
+/* category colours */
+.cat-prescription { background: #eef2ff; color: #4f46e5; }
+.cat-test         { background: #d1fae5; color: #065f46; }
+.cat-diagnosis    { background: #fef3c7; color: #92400e; }
+.cat-other        { background: #f1f5f9; color: #475569; }
+/* stagger rows */
+.dtable tbody tr { animation: rowIn 0.35s ease both; }
+.dtable tbody tr:nth-child(1) { animation-delay: 0.05s; }
+.dtable tbody tr:nth-child(2) { animation-delay: 0.10s; }
+.dtable tbody tr:nth-child(3) { animation-delay: 0.15s; }
+.dtable tbody tr:nth-child(4) { animation-delay: 0.20s; }
+.dtable tbody tr:nth-child(n+5) { animation-delay: 0.25s; }
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+</style>
+</head>
+<body class="dash-page">
+<nav th:replace="~{layout :: navbar}"></nav>
+<div th:replace="~{layout :: alerts}"></div>
+<main>
+  <div class="dashboard animate-fade">
+    <div class="container">
 
-<head th:replace="~{layout :: head('Medical Reports - Medical Care', ~{})}"></head>
-
-<body>
-    <nav th:replace="~{layout :: navbar}"></nav>
-    <div th:replace="~{layout :: alerts}"></div>
-
-    <main>
-        <div class="dashboard animate-fade">
-            <div class="container">
-                <header class="mb-4">
-                    <h1><i class="fas fa-file-medical"></i> Medical Records</h1>
-                    <p>Securely organize, analyze, and share your health documents.</p>
-                </header>
-
-                <div class="grid-2-1">
-                    <div class="card">
-                        <h3 class="mb-4"><i class="fas fa-folder-open"></i> Your Documents</h3>
-
-                        <th:block th:if="${not #lists.isEmpty(reports)}">
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th>Record</th>
-                                            <th>Category</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr th:each="report : ${reports}" th:id="'report-' + ${report.id}">
-                                            <td>
-                                                <strong th:text="${report.reportName}">Record Name</strong><br>
-                                                <small class="text-muted" th:text="${report.reportDate}">Date</small>
-                                            </td>
-                                            <td><span class="badge badge-info" th:text="${report.category}">Category</span></td>
-                                            <td>
-                                                <div class="d-flex gap-1">
-                                                    <!-- View Document -->
-                                                    <a th:href="@{'/uploads/' + ${report.filePath}}" target="_blank" class="btn btn-sm btn-secondary" title="View Document">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    <!-- AI Summarizer Agent Trigger Button -->
-                                                    <button class="btn btn-sm btn-warning ai-summarize-btn" th:onclick="'summarizeReport(' + ${report.id} + ')'" title="AI Report Summary" style="background-color: #9b59b6; border-color: #9b59b6; color: white;">
-                                                        <i class="fas fa-magic"></i>
-                                                    </button>
-                                                    <!-- Edit Details -->
-                                                    <button class="btn btn-sm btn-secondary edit-record-btn"
-                                                            th:data-id="${report.id}" th:data-name="${report.reportName}"
-                                                            th:data-category="${report.category}" th:data-date="${report.reportDate}"
-                                                            th:data-description="${report.description}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <!-- Share with Doctor -->
-                                                    <button class="btn btn-sm btn-primary" th:onclick="openShareModal([[${report.id}]], [[${report.reportName}]])" title="Share with Doctor">
-                                                        <i class="fas fa-share-alt"></i>
-                                                    </button>
-                                                    <!-- Delete -->
-                                                    <button class="btn btn-sm btn-danger" th:onclick="'deleteReport(' + ${report.id} + ')'" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </th:block>
-                        <th:block th:if="${#lists.isEmpty(reports)}">
-                            <div class="text-center py-5">
-                                <i class="fas fa-upload fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No records found. Upload your first one!</p>
-                            </div>
-                        </th:block>
-                    </div>
-
-                    <div class="card">
-                        <h3 class="mb-4"><i class="fas fa-cloud-upload-alt"></i> Upload New</h3>
-                        <form th:action="@{/patient/medical-reports/upload}" method="POST" enctype="multipart/form-data">
-                            <div class="form-group">
-                                <label for="report_name">Document Name</label>
-                                <input type="text" id="report_name" name="report_name" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="category">Category</label>
-                                <select id="category" name="category" class="form-control" required>
-                                    <option value="Prescription">Prescription</option>
-                                    <option value="Test Report">Test Report</option>
-                                    <option value="Diagnosis">Diagnosis</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="report_date">Date</label>
-                                <input type="date" id="report_date" name="report_date" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="description">Doctor Notes / Description</label>
-                                <textarea id="description" name="description" class="form-control" rows="2" placeholder="Optional notes..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="report_file">File (PDF/Image)</label>
-                                <input type="file" id="report_file" name="report_file" class="form-control" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 mt-3">Upload Now</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+      <!-- Header -->
+      <div class="dash-header" style="background:linear-gradient(135deg,#10b981 0%,#0ea5e9 100%);">
+        <div class="dash-header-text">
+          <h1><i class="fas fa-file-medical"></i> Medical Records</h1>
+          <p>Securely organize, analyse, and share your health documents.</p>
         </div>
-    </main>
+        <div class="dash-header-badge"><i class="fas fa-shield-alt"></i> Health Vault</div>
+      </div>
 
-    <!-- Modals -->
-    <!-- Share Modal -->
-    <div id="shareModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Share Record</h3>
-                <span class="close" onclick="closeModal('shareModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p id="shareRecordName" class="mb-3">Sharing: <strong><span></span></strong></p>
-                <div class="form-group">
-                    <label>Select Doctor</label>
-                    <select id="shareDoctorSelect" class="form-control">
-                        <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:text="'Dr. ' + ${doctor.name} + ' (' + ${doctor.specialization} + ')'">Doctor name</option>
-                    </select>
-                </div>
-                <div class="d-flex gap-2 mt-4">
-                    <button class="btn btn-primary w-100" onclick="submitShare()">Grant Access</button>
-                    <button class="btn btn-secondary w-100" onclick="closeModal('shareModal')">Cancel</button>
-                </div>
-            </div>
+      <div class="dash-grid-3-1">
+
+        <!-- ── LEFT: Records Table ── -->
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title"><i class="fas fa-folder-open icon-sky"></i> Your Documents</div>
+            <span class="sbadge sbadge-blue" th:text="${reports.size()} + ' files'">0 files</span>
+          </div>
+          <div class="dash-card-body" style="padding:0;">
+            <th:block th:if="${not #lists.isEmpty(reports)}">
+              <div class="dtable-wrap" style="border:none;border-radius:0;">
+                <table class="dtable">
+                  <thead>
+                    <tr>
+                      <th>Record</th>
+                      <th>Category</th>
+                      <th>Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="report : ${reports}" th:id="'report-' + ${report.id}">
+                      <td>
+                        <div style="display:flex;align-items:center;gap:0.6rem;">
+                          <div style="width:2.1rem;height:2.1rem;border-radius:0.5rem;background:#eef2ff;display:flex;align-items:center;justify-content:center;color:#4f46e5;font-size:0.9rem;flex-shrink:0;">
+                            <i class="fas fa-file-pdf"></i>
+                          </div>
+                          <div>
+                            <strong th:text="${report.reportName}" style="font-size:0.88rem;">Name</strong>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="sbadge"
+                              th:classappend="${report.category == 'Prescription'} ? 'cat-prescription' : (${report.category == 'Test Report'} ? 'cat-test' : (${report.category == 'Diagnosis'} ? 'cat-diagnosis' : 'cat-other'))"
+                              th:text="${report.category}">Category</span>
+                      </td>
+                      <td style="font-size:0.82rem;color:#64748b;" th:text="${report.reportDate}">Date</td>
+                      <td>
+                        <div style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+                          <a th:href="@{'/uploads/' + ${report.filePath}}" target="_blank" class="btn-xs btn-xs-sky" title="View">
+                            <i class="fas fa-eye"></i>
+                          </a>
+                          <button class="btn-xs" style="background:#f3e8ff;color:#7c3aed;" th:onclick="'summarizeReport(' + ${report.id} + ')'" title="AI Summary">
+                            <i class="fas fa-magic"></i>
+                          </button>
+                          <button class="btn-xs btn-xs-primary edit-record-btn"
+                                  th:data-id="${report.id}" th:data-name="${report.reportName}"
+                                  th:data-category="${report.category}" th:data-date="${report.reportDate}"
+                                  th:data-description="${report.description}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                          <button class="btn-xs btn-xs-success" th:onclick="openShareModal([[${report.id}]], [[${report.reportName}]])" title="Share">
+                            <i class="fas fa-share-alt"></i>
+                          </button>
+                          <button class="btn-xs btn-xs-danger" th:onclick="'deleteReport(' + ${report.id} + ')'" title="Delete">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </th:block>
+            <th:block th:if="${#lists.isEmpty(reports)}">
+              <div class="empty-state" style="padding:4rem 2rem;">
+                <i class="fas fa-cloud-upload-alt" style="font-size:3rem;color:#818cf8;opacity:0.7;margin-bottom:1.25rem;display:block;"></i>
+                <p style="font-size:0.95rem;color:#64748b;margin-bottom:1.5rem;">No documents uploaded yet. Add your first health record!</p>
+              </div>
+            </th:block>
+          </div>
         </div>
+
+        <!-- ── RIGHT: Upload Panel ── -->
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <div class="dash-card-title"><i class="fas fa-cloud-upload-alt icon-green"></i> Upload New</div>
+          </div>
+          <div class="dash-card-body">
+            <form th:action="@{/patient/medical-reports/upload}" method="POST" enctype="multipart/form-data" id="upload-form">
+
+              <div class="upload-zone" id="drop-zone" onclick="document.getElementById('report_file').click();">
+                <i class="fas fa-file-medical-alt"></i>
+                <p><strong>Click or drag & drop</strong> your file here</p>
+                <p style="font-size:0.78rem;margin-top:0.4rem;color:#94a3b8;">PDF, JPG, PNG supported</p>
+                <span id="file-name-display" style="display:none;margin-top:0.75rem;font-size:0.82rem;color:#4f46e5;font-weight:700;"></span>
+              </div>
+              <input type="file" id="report_file" name="report_file" required style="display:none;" accept=".pdf,.jpg,.jpeg,.png">
+
+              <div style="margin-top:1.25rem;">
+                <label class="input-label" for="report_name">Document Name</label>
+                <div class="input-float" style="margin-bottom:0;">
+                  <i class="fas fa-tag input-icon"></i>
+                  <input type="text" id="report_name" name="report_name" class="form-control" placeholder="e.g. Blood Test Report" required style="padding-left:2.5rem;">
+                </div>
+              </div>
+
+              <div style="margin-top:1rem;">
+                <label class="input-label" for="category">Category</label>
+                <select id="category" name="category" class="form-control" required>
+                  <option value="Prescription">Prescription</option>
+                  <option value="Test Report">Test Report</option>
+                  <option value="Diagnosis">Diagnosis</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div style="margin-top:1rem;">
+                <label class="input-label" for="report_date">Date</label>
+                <input type="date" id="report_date" name="report_date" class="form-control" required>
+              </div>
+
+              <div style="margin-top:1rem;">
+                <label class="input-label" for="description">Notes (optional)</label>
+                <textarea id="description" name="description" class="form-control" rows="2" placeholder="Doctor notes, remarks..."></textarea>
+              </div>
+
+              <button type="submit" class="auth-submit-btn" style="margin-top:1.25rem;font-size:0.9rem;padding:0.8rem;">
+                <i class="fas fa-cloud-upload-alt"></i> Upload Record
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+</main>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Details</h3>
-                <span class="close" onclick="closeModal('editModal')">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="editReportName" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="editCategory" class="form-control">
-                        <option value="Prescription">Prescription</option>
-                        <option value="Test Report">Test Report</option>
-                        <option value="Diagnosis">Diagnosis</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="editReportDate" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="editDescription" class="form-control" rows="3"></textarea>
-                </div>
-                <div class="d-flex gap-2 mt-4">
-                    <button class="btn btn-primary w-100" onclick="submitEdit()">Save</button>
-                    <button class="btn btn-secondary w-100" onclick="closeModal('editModal')">Cancel</button>
-                </div>
-            </div>
-        </div>
+<!-- Share Modal -->
+<div id="shareModal" class="modal">
+  <div class="modal-content" style="border-top:4px solid #10b981;">
+    <div class="modal-header">
+      <h3 style="color:#065f46;display:flex;align-items:center;gap:0.5rem;"><i class="fas fa-share-alt"></i> Share Record</h3>
+      <span class="close" onclick="closeModal('shareModal')">&times;</span>
     </div>
-
-    <!-- AI Summary Modal -->
-    <div id="aiSummaryModal" class="modal">
-        <div class="modal-content" style="max-width: 650px;">
-            <div class="modal-header" style="background-color: #9b59b6; color: white;">
-                <h3><i class="fas fa-magic"></i> AI Report Summarizer Agent</h3>
-                <span class="close" onclick="closeModal('aiSummaryModal')" style="color: white;">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div id="ai_summary_loading" class="text-center py-4">
-                    <i class="fas fa-circle-notch fa-spin fa-2x text-primary mb-3" style="color: #9b59b6 !important;"></i>
-                    <p>Synthesizing metrics and physician notes...</p>
-                </div>
-                <div id="ai_summary_content" style="display: none; text-align: left; line-height: 1.6;">
-                    <div class="summary-box p-3 bg-light rounded" style="border-left: 5px solid #9b59b6; white-space: pre-wrap; font-family: inherit;">
-                        <!-- AI text injected here -->
-                    </div>
-                </div>
-                <div class="text-center mt-4">
-                    <button class="btn btn-primary" onclick="closeModal('aiSummaryModal')" style="background-color: #9b59b6; border-color: #9b59b6; width: 150px;">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
+    <div class="modal-body">
+      <p id="shareRecordName" style="font-size:0.88rem;color:#64748b;margin-bottom:1rem;">Sharing: <strong><span></span></strong></p>
+      <div class="form-group">
+        <label style="font-size:0.82rem;font-weight:700;color:#475569;">Select Doctor</label>
+        <select id="shareDoctorSelect" class="form-control">
+          <option th:each="doctor : ${doctors}" th:value="${doctor.id}"
+                  th:text="'Dr. ' + ${doctor.name} + ' (' + ${doctor.specialization} + ')'">Doctor</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+        <button class="btn btn-primary w-100" onclick="submitShare()"><i class="fas fa-check"></i> Grant Access</button>
+        <button class="btn btn-secondary w-100" onclick="closeModal('shareModal')">Cancel</button>
+      </div>
     </div>
+  </div>
+</div>
 
-    <footer th:replace="~{layout :: footer}"></footer>
-    <script th:replace="~{layout :: scripts}"></script>
-    <script>
-        let currentId = null;
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        
-        function openShareModal(id, name) {
-            currentId = id;
-            document.querySelector('#shareRecordName strong span').innerText = name;
-            document.getElementById('shareModal').style.display = 'flex';
-        }
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content" style="border-top:4px solid #4f46e5;">
+    <div class="modal-header">
+      <h3 style="color:#4f46e5;display:flex;align-items:center;gap:0.5rem;"><i class="fas fa-edit"></i> Edit Record</h3>
+      <span class="close" onclick="closeModal('editModal')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Name</label><input type="text" id="editReportName" class="form-control"></div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="editCategory" class="form-control">
+          <option value="Prescription">Prescription</option>
+          <option value="Test Report">Test Report</option>
+          <option value="Diagnosis">Diagnosis</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date</label><input type="date" id="editReportDate" class="form-control"></div>
+      <div class="form-group"><label>Description</label><textarea id="editDescription" class="form-control" rows="3"></textarea></div>
+      <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+        <button class="btn btn-primary w-100" onclick="submitEdit()"><i class="fas fa-save"></i> Save</button>
+        <button class="btn btn-secondary w-100" onclick="closeModal('editModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-        async function submitShare() {
-            const docId = document.getElementById('shareDoctorSelect').value;
-            const resp = await fetch('/patient/medical-reports/share', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ report_id: currentId, doctor_id: docId })
-            });
-            const data = await resp.json();
-            if (data.success) { 
-                alert(data.message); 
-                closeModal('shareModal'); 
-            } else {
-                alert(data.error);
-            }
-        }
+<!-- AI Summary Modal -->
+<div id="aiSummaryModal" class="modal">
+  <div class="modal-content" style="max-width:660px;border-top:4px solid #8b5cf6;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#ede9fe,#fce7f3);">
+      <h3 style="color:#6d28d9;display:flex;align-items:center;gap:0.5rem;"><i class="fas fa-magic"></i> AI Report Summarizer</h3>
+      <span class="close" onclick="closeModal('aiSummaryModal')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div id="ai_summary_loading" class="empty-state">
+        <i class="fas fa-circle-notch fa-spin" style="font-size:2.5rem;color:#8b5cf6;opacity:1;margin-bottom:1rem;"></i>
+        <p>Synthesizing report data with AI...</p>
+      </div>
+      <div id="ai_summary_content" style="display:none;line-height:1.7;">
+        <div class="summary-box" style="border-left:4px solid #8b5cf6;padding:1rem 1.25rem;background:#faf5ff;border-radius:0.75rem;white-space:pre-wrap;font-size:0.9rem;"></div>
+      </div>
+      <button class="btn btn-primary w-100 mt-3" onclick="closeModal('aiSummaryModal')" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);border:none;">Close</button>
+    </div>
+  </div>
+</div>
 
-        async function deleteReport(id) {
-            if (!confirm('Delete this record?')) return;
-            const resp = await fetch(`/patient/medical-reports/delete/${id}`, { method: 'POST' });
-            const data = await resp.json();
-            if (data.success) {
-                document.getElementById(`report-${id}`).remove();
-            } else {
-                alert(data.error);
-            }
-        }
+<footer th:replace="~{layout :: footer}"></footer>
+<script th:replace="~{layout :: scripts}"></script>
+<script>
+  let currentId = null;
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        document.addEventListener('click', e => {
-            const btn = e.target.closest('.edit-record-btn');
-            if (btn) {
-                currentId = btn.dataset.id;
-                document.getElementById('editReportName').value = btn.dataset.name;
-                document.getElementById('editCategory').value = btn.dataset.category;
-                document.getElementById('editReportDate').value = btn.dataset.date;
-                document.getElementById('editDescription').value = btn.dataset.description || '';
-                document.getElementById('editModal').style.display = 'flex';
-            }
-        });
+  function openShareModal(id, name) {
+    currentId = id;
+    document.querySelector('#shareRecordName strong span').innerText = name;
+    document.getElementById('shareModal').style.display = 'flex';
+  }
 
-        async function submitEdit() {
-            const payload = {
-                report_name: document.getElementById('editReportName').value,
-                category: document.getElementById('editCategory').value,
-                report_date: document.getElementById('editReportDate').value,
-                description: document.getElementById('editDescription').value
-            };
-            const resp = await fetch(`/patient/medical-reports/edit/${currentId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if ((await resp.json()).success) {
-                location.reload();
-            }
-        }
+  async function submitShare() {
+    const docId = document.getElementById('shareDoctorSelect').value;
+    const resp = await fetch('/patient/medical-reports/share', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ report_id: currentId, doctor_id: docId })
+    });
+    const data = await resp.json();
+    if (data.success) { alert(data.message); closeModal('shareModal'); }
+    else { alert(data.error); }
+  }
 
-        async function summarizeReport(id) {
-            document.getElementById('aiSummaryModal').style.display = 'flex';
-            document.getElementById('ai_summary_loading').style.display = 'block';
-            document.getElementById('ai_summary_content').style.display = 'none';
+  async function deleteReport(id) {
+    if (!confirm('Delete this record?')) return;
+    const resp = await fetch(`/patient/medical-reports/delete/${id}`, { method: 'POST' });
+    const data = await resp.json();
+    if (data.success) {
+      const row = document.getElementById(`report-${id}`);
+      row.style.animation = 'none';
+      row.style.opacity = '0';
+      row.style.transform = 'translateX(20px)';
+      row.style.transition = 'all 0.3s ease';
+      setTimeout(() => row.remove(), 300);
+    } else { alert(data.error); }
+  }
 
-            try {
-                const resp = await fetch(`/api/ai/summarize-report/${id}`);
-                const data = await resp.json();
-                if (data.success) {
-                    // Simple markdown bold formatting replacement for rendering
-                    let summaryText = data.summary
-                        .replace(/### (.*)/g, '<h4 class="text-primary">$1</h4>')
-                        .replace(/#### (.*)/g, '<h5>$1</h5>')
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                    
-                    document.querySelector('.summary-box').innerHTML = summaryText;
-                    document.getElementById('ai_summary_loading').style.display = 'none';
-                    document.getElementById('ai_summary_content').style.display = 'block';
-                } else {
-                    document.querySelector('.summary-box').innerText = "Failed to load summary: " + data.error;
-                    document.getElementById('ai_summary_loading').style.display = 'none';
-                    document.getElementById('ai_summary_content').style.display = 'block';
-                }
-            } catch (err) {
-                document.querySelector('.summary-box').innerText = "Network error while synthesizing report.";
-                document.getElementById('ai_summary_loading').style.display = 'none';
-                document.getElementById('ai_summary_content').style.display = 'block';
-            }
-        }
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.edit-record-btn');
+    if (btn) {
+      currentId = btn.dataset.id;
+      document.getElementById('editReportName').value    = btn.dataset.name;
+      document.getElementById('editCategory').value      = btn.dataset.category;
+      document.getElementById('editReportDate').value    = btn.dataset.date;
+      document.getElementById('editDescription').value   = btn.dataset.description || '';
+      document.getElementById('editModal').style.display = 'flex';
+    }
+  });
 
-        document.getElementById('report_date').valueAsDate = new Date();
-    </script>
+  async function submitEdit() {
+    const payload = {
+      report_name: document.getElementById('editReportName').value,
+      category:    document.getElementById('editCategory').value,
+      report_date: document.getElementById('editReportDate').value,
+      description: document.getElementById('editDescription').value
+    };
+    const resp = await fetch(`/patient/medical-reports/edit/${currentId}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    if ((await resp.json()).success) location.reload();
+  }
+
+  async function summarizeReport(id) {
+    document.getElementById('aiSummaryModal').style.display = 'flex';
+    document.getElementById('ai_summary_loading').style.display = 'block';
+    document.getElementById('ai_summary_content').style.display = 'none';
+    try {
+      const resp = await fetch(`/api/ai/summarize-report/${id}`);
+      const data = await resp.json();
+      const text = data.success ? data.summary
+        .replace(/### (.*)/g,  '<h4 style="color:#6d28d9">$1</h4>')
+        .replace(/#### (.*)/g, '<h5>$1</h5>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        : 'Failed: ' + data.error;
+      document.querySelector('.summary-box').innerHTML = text;
+    } catch { document.querySelector('.summary-box').innerText = 'Network error.'; }
+    document.getElementById('ai_summary_loading').style.display = 'none';
+    document.getElementById('ai_summary_content').style.display = 'block';
+  }
+
+  // Drag-drop
+  const dz  = document.getElementById('drop-zone');
+  const inp = document.getElementById('report_file');
+  const lbl = document.getElementById('file-name-display');
+  inp.addEventListener('change', () => { if (inp.files[0]) { lbl.textContent = '📎 ' + inp.files[0].name; lbl.style.display = 'block'; }});
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]);
+    inp.files = dt.files;
+    lbl.textContent = '📎 ' + e.dataTransfer.files[0].name; lbl.style.display = 'block';
+  });
+
+  document.getElementById('report_date').valueAsDate = new Date();
+</script>
 </body>
-
 </html>

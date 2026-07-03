@@ -3,8 +3,10 @@ package com.medicalapp.service;
 import com.medicalapp.model.Appointment;
 import com.medicalapp.model.Notification;
 import com.medicalapp.model.Prescription;
+import com.medicalapp.model.PrescriptionReminder;
 import com.medicalapp.repository.AppointmentRepository;
 import com.medicalapp.repository.NotificationRepository;
+import com.medicalapp.repository.PrescriptionReminderRepository;
 import com.medicalapp.repository.PrescriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,9 @@ public class NotificationService {
 
     @Autowired
     private NotificationRepository notificationRepository;
+
+    @Autowired
+    private PrescriptionReminderRepository prescriptionReminderRepository;
 
     @Transactional
     public void checkAndGenerateNotifications(Long userId) {
@@ -60,7 +65,22 @@ public class NotificationService {
             }
         }
 
-        // 3. Health Checkup Reminders (6 months (180 days) after last appointment)
+        // 3. User-configured Prescription Reminders (Daily alarms)
+        List<PrescriptionReminder> activeAlarms = prescriptionReminderRepository.findByPatientIdAndIsActive(userId, true);
+        String todayDateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMM"));
+        for (PrescriptionReminder alarm : activeAlarms) {
+            String message = "Medication Alarm (" + todayDateStr + "): It is time to take your " + alarm.getMedicineName() + " (" + alarm.getDosage() + ") scheduled for " + alarm.getTimeOfDay() + ".";
+            if (!notificationRepository.existsByUserIdAndMessage(userId, message)) {
+                Notification notif = new Notification();
+                notif.setUserId(userId);
+                notif.setType("refill");
+                notif.setMessage(message);
+                notificationRepository.save(notif);
+            }
+        }
+
+        // 4. Health Checkup Reminders (6 months (180 days) after last appointment)
+
         List<Appointment> lastAppts = appointmentRepository.findByPatientIdAndStatusOrderByDateDesc(userId, "approved");
         if (!lastAppts.isEmpty()) {
             Appointment lastAppt = lastAppts.get(0);

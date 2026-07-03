@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Hospital Dashboard - Medicalcare', ~{::style})}">
+<style>
+  @import url('/css/dashboard.css');
+  /* Custom dashboard styles for modal overlay */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background: white; border-radius: 1.25rem; width: 100%; max-width: 480px;
+    padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+    animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+
+<body class="dash-page">
+  <nav th:replace="~{layout :: navbar}"></nav>
+  <div th:replace="~{layout :: alerts}"></div>
+
+  <main>
+    <div class="dashboard animate-fade">
+      <div class="container">
+
+        <!-- ── HEADER ── -->
+        <div class="dash-header admin-header" style="background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);">
+          <div class="dash-header-text">
+            <h1><i class="fas fa-hospital"></i> Hospital Administration</h1>
+            <p>Welcome, <strong th:text="${session.name}">Hospital</strong>! Manage doctors, view appointments, and post broadcasts.</p>
+          </div>
+          <div style="display:flex;gap:0.75rem;position:relative;z-index:2;">
+            <div class="dash-header-badge">
+              <i class="fas fa-calendar-day"></i>
+              <span id="today-date"></span>
+            </div>
+            <a th:href="@{/hospital/announcements}" class="dash-header-badge" style="text-decoration:none;">
+              <i class="fas fa-bullhorn"></i> Send Notices
+            </a>
+          </div>
+        </div>
+
+        <!-- ── STAT CARDS ── -->
+        <div class="stats-grid">
+          <div class="pstat-card pstat-sky">
+            <div class="pstat-icon"><i class="fas fa-user-md"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${stats.total_doctors}">0</h3>
+              <p>Active Doctors</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-amber">
+            <div class="pstat-icon"><i class="fas fa-user-clock"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${stats.pending_approvals}">0</h3>
+              <p>Pending Approval</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-blue">
+            <div class="pstat-icon"><i class="fas fa-users"></i></div>
+            <div class="pstat-body">
+              <h3 th:text="${stats.unique_patients}">0</h3>
+              <p>Unique Patients</p>
+            </div>
+          </div>
+          <div class="pstat-card pstat-violet">
+            <div class="pstat-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+            <div class="pstat-body">
+              <h3>₹<span th:text="${#numbers.formatDecimal(stats.total_revenue, 1, 0)}">0</span></h3>
+              <p>Total Revenue</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── DOCTORS PENDING APPROVAL ── -->
+        <th:block th:if="${not #lists.isEmpty(pending_doctors)}">
+          <div class="dash-card" style="margin-bottom:1.5rem; border:2px solid #fde68a; background: linear-gradient(135deg,#fffbeb,#fff);">
+            <div class="dash-card-header" style="border-bottom-color:#fef3c7;">
+              <div class="dash-card-title">
+                <i class="fas fa-user-plus icon-amber"></i>
+                Doctors Requesting Joining Approval
+                <span class="pending-badge" th:text="${pending_doctors.size()}">0</span>
+              </div>
+            </div>
+            <div class="dash-card-body" style="padding:0;">
+              <div class="dtable-wrap" style="border-radius:0; border:none;">
+                <table class="dtable">
+                  <thead>
+                    <tr>
+                      <th>Doctor</th>
+                      <th>Specialization</th>
+                      <th>Qualifications</th>
+                      <th>Experience</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="doctor : ${pending_doctors}">
+                      <td>
+                        <div style="display:flex;align-items:center;gap:0.6rem;">
+                          <div class="dlist-avatar" style="width:2.2rem;height:2.2rem;font-size:0.8rem;background:linear-gradient(135deg,#f59e0b,#ef4444);">
+                            <span th:text="${#strings.substring(doctor.name,0,1)}">D</span>
+                          </div>
+                          <div>
+                            <strong th:text="${doctor.name}">Name</strong>
+                            <div style="font-size:0.75rem;color:#64748b;" th:text="${doctor.email}">email</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span class="sbadge sbadge-yellow" th:text="${doctor.specialization}">Spec</span></td>
+                      <td th:text="${doctor.qualification}">MBBS</td>
+                      <td th:text="${doctor.experience} + ' yrs'">5 yrs</td>
+                      <td>
+                        <button class="btn-xs btn-xs-success approve-doc-trigger"
+                                th:data-doctor-id="${doctor.id}"
+                                th:data-doctor-name="${doctor.name}">
+                          <i class="fas fa-check"></i> Review &amp; Approve
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </th:block>
+
+        <!-- ── MAIN CONTENT GRID ── -->
+        <div class="dash-grid-2">
+
+          <!-- Approved Active Doctors -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title"><i class="fas fa-user-check icon-green"></i> Active Medical Staff</div>
+              <span class="sbadge sbadge-blue" th:text="${active_doctors.size()} + ' active'">0</span>
+            </div>
+            <div class="dash-card-body" style="padding:0;">
+              <th:block th:if="${not #lists.isEmpty(active_doctors)}">
+                <div class="dtable-wrap" style="border-radius:0; border:none;">
+                  <table class="dtable">
+                    <thead>
+                      <tr>
+                        <th>Doctor</th>
+                        <th>Specialty</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="doctor : ${active_doctors}">
+                        <td>
+                          <strong th:text="'Dr. ' + ${doctor.name}">Dr. Roy</strong>
+                          <div style="font-size:0.72rem;color:#64748b;" th:text="${doctor.qualification}">MBBS</div>
+                        </td>
+                        <td><span class="sbadge sbadge-blue" th:text="${doctor.specialization}">Spec</span></td>
+                        <td>
+                          <span th:if="${'Active'.equalsIgnoreCase(doctor.availabilityStatus)}" class="sbadge sbadge-green">Available</span>
+                          <span th:if="${!'Active'.equalsIgnoreCase(doctor.availabilityStatus)}" class="sbadge sbadge-rose">On Leave</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </th:block>
+              <th:block th:if="${#lists.isEmpty(active_doctors)}">
+                <div class="empty-state">
+                  <i class="fas fa-user-md" style="opacity:0.3;"></i>
+                  <p>No active approved doctors registered.</p>
+                </div>
+              </th:block>
+            </div>
+          </div>
+
+          <!-- Pending Admin Approvals (Awaiting Admin Activation) -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title"><i class="fas fa-hourglass-half icon-blue"></i> Awaiting Admin Activation</div>
+              <span class="sbadge sbadge-yellow" th:text="${pending_admin_doctors.size()} + ' pending'">0</span>
+            </div>
+            <div class="dash-card-body" style="padding:0;">
+              <th:block th:if="${not #lists.isEmpty(pending_admin_doctors)}">
+                <div class="dtable-wrap" style="border-radius:0; border:none;">
+                  <table class="dtable">
+                    <thead>
+                      <tr>
+                        <th>Doctor</th>
+                        <th>Specialty</th>
+                        <th>Hospital Note</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="doctor : ${pending_admin_doctors}">
+                        <td>
+                          <strong th:text="'Dr. ' + ${doctor.name}">Dr. Name</strong>
+                        </td>
+                        <td th:text="${doctor.specialization}">Spec</td>
+                        <td style="font-size:0.78rem;color:#475569;font-style:italic;" th:text="${doctor.hospitalApprovalMessage}">Recommended</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </th:block>
+              <th:block th:if="${#lists.isEmpty(pending_admin_doctors)}">
+                <div class="empty-state">
+                  <i class="fas fa-check-double" style="color:#10b981;opacity:0.5;"></i>
+                  <p>No doctors currently pending admin activation.</p>
+                </div>
+              </th:block>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── RECENT APPOINTMENTS ── -->
+        <div class="dash-card" style="margin-top:1.5rem;">
+          <div class="dash-card-header">
+            <div class="dash-card-title"><i class="fas fa-calendar-alt icon-violet"></i> Hospital Appointments Scheduled</div>
+            <span class="sbadge sbadge-violet" th:text="${stats.total_appointments} + ' total'">0</span>
+          </div>
+          <div class="dash-card-body" style="padding:0;">
+            <th:block th:if="${not #lists.isEmpty(appointments)}">
+              <div class="dtable-wrap" style="border-radius:0; border:none;">
+                <table class="dtable">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Consulting Doctor</th>
+                      <th>Date / Time</th>
+                      <th>Shift</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="app : ${appointments}">
+                      <td>
+                        <strong th:text="${app.patient.name}">Patient</strong>
+                      </td>
+                      <td>
+                        <strong th:text="'Dr. ' + ${app.doctor.name}">Doctor</strong>
+                      </td>
+                      <td>
+                        <span th:text="${app.date}">Date</span> &nbsp;·&nbsp; <span th:text="${app.time}">10:00</span>
+                      </td>
+                      <td>
+                        <span class="sbadge sbadge-blue" th:text="${app.shift != null ? app.shift : 'Morning'}">Morning</span>
+                      </td>
+                      <td>
+                        <span th:if="${'approved'.equalsIgnoreCase(app.status)}" class="sbadge sbadge-green">Confirmed</span>
+                        <span th:if="${'pending'.equalsIgnoreCase(app.status)}" class="sbadge sbadge-yellow">Pending</span>
+                        <span th:if="${'rejected'.equalsIgnoreCase(app.status)}" class="sbadge sbadge-rose">Cancelled</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </th:block>
+            <th:block th:if="${#lists.isEmpty(appointments)}">
+              <div class="empty-state">
+                <i class="fas fa-calendar-times" style="opacity:0.3;"></i>
+                <p>No recent appointments booked in this hospital.</p>
+              </div>
+            </th:block>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ── APPROVAL MESSAGE MODAL ── -->
+  <div id="approveModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 style="font-family:'Outfit',sans-serif;font-weight:800;color:#1e293b;margin-bottom:0.5rem;display:flex;align-items:center;gap:0.5rem;">
+        <i class="fas fa-file-signature" style="color:#10b981;"></i> Hospital Recommendation
+      </h3>
+      <p style="font-size:0.85rem;color:#64748b;margin-bottom:1.25rem;">
+        Approve <strong id="modal-doc-name" style="color:#1e293b;">Dr.</strong> and write a verification note for the system administrator.
+      </p>
+      <form id="approvalForm">
+        <input type="hidden" id="modal-doc-id">
+        <div style="margin-bottom:1.25rem;">
+          <label for="approvalMessage" style="display:block;font-size:0.78rem;font-weight:700;color:#475569;margin-bottom:0.4rem;">Recommendation Message / Details</label>
+          <textarea id="approvalMessage" rows="4" style="width:100%;padding:0.8rem 1rem;border:2px solid #e2e8f0;border-radius:0.75rem;font-size:0.9rem;outline:none;resize:none;" placeholder="e.g. Verified license and credentials. Dr. Jane has 8 years of cardio experience. Highly recommended." required></textarea>
+        </div>
+        <div style="display:flex;gap:0.75rem;">
+          <button type="submit" class="btn btn-primary w-100" style="background:#10b981;border-color:#10b981;">
+            <i class="fas fa-check-circle"></i> Approve &amp; Send to Admin
+          </button>
+          <button type="button" class="btn btn-secondary w-100" onclick="closeApproveModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer th:replace="~{layout :: footer}"></footer>
+  <script th:replace="~{layout :: scripts}"></script>
+  <script>
+    document.getElementById('today-date').textContent =
+      new Date().toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+
+    // Open Approval Modal
+    document.querySelectorAll('.approve-doc-trigger').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.getElementById('modal-doc-id').value = this.dataset.doctorId;
+        document.getElementById('modal-doc-name').textContent = this.dataset.doctorName;
+        document.getElementById('approvalMessage').value = '';
+        document.getElementById('approveModal').style.display = 'flex';
+      });
+    });
+
+    function closeApproveModal() {
+      document.getElementById('approveModal').style.display = 'none';
+    }
+
+    document.getElementById('approvalForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const doctorId = document.getElementById('modal-doc-id').value;
+      const approvalMessage = document.getElementById('approvalMessage').value;
+
+      try {
+        const response = await fetch(`/api/hospital/approve-doctor/${doctorId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approvalMessage: approvalMessage })
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert('Doctor approved! Request sent to Admin for final activation.');
+          location.reload();
+        } else {
+          alert(data.error || 'Something went wrong.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Server connection error.');
+      }
+    });
+  </script>
+</body>
+</html>

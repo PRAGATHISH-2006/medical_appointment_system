@@ -1,101 +1,825 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 
-<head th:replace="~{layout :: head('Register - Medicalcare', ~{})}"></head>
+<head th:replace="~{layout :: head('Register - Medicalcare', ~{::style})}">
+<style>
+    body {
+        background: radial-gradient(circle at 50% 80%, #064e3b 0%, #0f172a 100%);
+        overflow-x: hidden;
+        min-height: 100vh;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    /* Colorful animated backdrop blur spots */
+    .glow-spot {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(140px);
+        opacity: 0.35;
+        animation: floatGlow 12s infinite alternate ease-in-out;
+        pointer-events: none;
+    }
+    .glow-spot-1 {
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, #10b981, #0ea5e9);
+        bottom: 10%; left: 15%;
+    }
+    .glow-spot-2 {
+        width: 450px; height: 450px;
+        background: radial-gradient(circle, #4f46e5, #6366f1);
+        top: 20%; right: 15%;
+        animation-delay: -4s;
+    }
+
+    @keyframes floatGlow {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(30px, -30px) scale(1.1); }
+        100% { transform: translate(-15px, 15px) scale(0.95); }
+    }
+
+    .auth-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 4rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* BRAND LOGO HEADER */
+    .brand-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        animation: fadeInDown 0.8s ease both;
+    }
+
+    .brand-logo {
+        font-size: 3rem;
+        font-weight: 800;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .brand-logo span {
+        background: linear-gradient(90deg, #10b981, #0ea5e9 50%, #4f46e5 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .brand-logo i {
+        color: #10b981;
+        animation: pulse-heart 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse-heart {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.12); }
+    }
+
+    .brand-tagline {
+        font-size: 1.1rem;
+        color: #94a3b8;
+        margin: 0;
+    }
+
+    /* REGISTER CARD WRAPPER */
+    .auth-form-wrap {
+        width: 100%;
+        max-width: 520px;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 1.75rem;
+        padding: 3rem 2.5rem;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        margin-bottom: 4rem;
+        animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    .auth-form-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-avatar {
+        width: 68px; height: 68px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10b981, #0ea5e9, #4f46e5);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.75rem;
+        color: white;
+        margin: 0 auto 1.25rem;
+        box-shadow: 0 8px 25px rgba(16,185,129,0.4);
+    }
+
+    .auth-form-header h2 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: white;
+        margin-bottom: 0.35rem;
+        letter-spacing: -0.5px;
+    }
+
+    .auth-form-header p {
+        font-size: 0.88rem;
+        color: #94a3b8;
+    }
+
+    /* ===== FLASH ALERTS ===== */
+    .auth-alert {
+        padding: 0.95rem 1.15rem;
+        border-radius: 0.85rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+    .auth-alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .auth-alert-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .auth-alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+
+    /* ===== ROLE SELECTOR TABS ===== */
+    .role-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.6rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .role-tab {
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.85rem;
+        padding: 0.85rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .role-tab:hover { border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.08); }
+
+    .role-tab.active {
+        border-color: #10b981;
+        background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(14,165,233,0.15));
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    }
+
+    .role-tab i {
+        font-size: 1.4rem;
+        display: block;
+        margin-bottom: 0.35rem;
+        color: #94a3b8;
+        transition: color 0.25s;
+    }
+
+    .role-tab.active i { color: #10b981; }
+
+    .role-tab span {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #94a3b8;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .role-tab.active span { color: white; }
+
+    /* ===== FORM GRID ===== */
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 0.85rem;
+    }
+
+    /* ===== FLOATING INPUTS ===== */
+    .input-float {
+        position: relative;
+        margin-bottom: 1.25rem;
+    }
+
+    .input-float .input-icon {
+        position: absolute;
+        left: 1.15rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.95rem;
+        transition: color 0.25s;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .input-float.textarea-float .input-icon {
+        top: 1rem;
+        transform: none;
+    }
+
+    .input-float input,
+    .input-float select,
+    .input-float textarea {
+        width: 100%;
+        padding: 0.95rem 1rem 0.95rem 2.85rem;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0.85rem;
+        font-size: 0.92rem;
+        color: white;
+        background: rgba(255, 255, 255, 0.05);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: 'Inter', sans-serif;
+        outline: none;
+    }
+
+    .input-float textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .input-float select { appearance: none; cursor: pointer; }
+    .input-float select option { background: #0f172a; color: white; }
+
+    .input-float input::placeholder,
+    .input-float textarea::placeholder { color: #64748b; }
+
+    .input-float input:focus,
+    .input-float select:focus,
+    .input-float textarea:focus {
+        border-color: #10b981;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
+    }
+
+    .input-float input:focus ~ .input-icon,
+    .input-float select:focus ~ .input-icon,
+    .input-float textarea:focus ~ .input-icon { color: #10b981; }
+
+    .input-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-bottom: 0.35rem;
+        margin-left: 0.15rem;
+    }
+
+    .input-toggle {
+        position: absolute;
+        right: 1.15rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: color 0.25s;
+        border: none;
+        background: none;
+        padding: 0;
+        z-index: 1;
+    }
+    .input-toggle:hover { color: #10b981; }
+
+    /* ===== DOCTOR FIELDS SECTION ===== */
+    .doctor-section {
+        display: none;
+        background: rgba(16, 185, 129, 0.04);
+        border: 2px solid rgba(16, 185, 129, 0.25);
+        border-radius: 0.875rem;
+        padding: 1.25rem 1.25rem 0.25rem;
+        margin-bottom: 1.2rem;
+        animation: slideDown 0.35s ease;
+    }
+    .doctor-section.visible { display: block; }
+
+    .doctor-section-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #10b981;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* ===== SUBMIT BUTTON ===== */
+    .auth-submit-btn {
+        width: 100%;
+        padding: 1.05rem;
+        background: linear-gradient(135deg, #10b981, #0ea5e9 50%, #4f46e5 100%);
+        color: white;
+        border: none;
+        border-radius: 0.85rem;
+        font-size: 1rem;
+        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.6rem;
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        margin-top: 0.5rem;
+        letter-spacing: 0.4px;
+    }
+
+    .auth-submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.45);
+    }
+
+    /* ===== DIVIDER & LINKS ===== */
+    .auth-divider {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        margin: 1.5rem 0;
+        color: #475569;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+    .auth-divider::before, .auth-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .auth-links { text-align: center; }
+    .auth-links p { font-size: 0.9rem; color: #94a3b8; margin-bottom: 0.6rem; }
+    .auth-links a { color: #10b981; text-decoration: none; font-weight: 700; transition: color 0.25s ease; }
+    .auth-links a:hover { color: #059669; }
+
+    /* ===== BOTTOM STEPS SECTION ===== */
+    .steps-section {
+        width: 100%;
+        max-width: 900px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-top: 3.5rem;
+    }
+
+    .steps-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .step-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .step-badge {
+        width: 2.5rem; height: 2.5rem;
+        border-radius: 50%;
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-weight: 800;
+        font-size: 1rem;
+        margin-bottom: 1.25rem;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .step-card h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: white;
+        margin: 0 0 0.5rem;
+    }
+
+    .step-card p {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        line-height: 1.45;
+        margin: 0;
+    }
+
+    /* ===== SECTION LABEL ===== */
+    .section-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 1.25rem 0 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .section-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    @media (max-width: 850px) {
+        .steps-grid { grid-template-columns: 1fr; }
+        .auth-form-wrap { padding: 2rem 1.5rem; }
+    }
+    @media (max-width: 480px) {
+        .form-grid-2 { grid-template-columns: 1fr; }
+        .role-tabs { grid-template-columns: 1fr; }
+    }
+</style>
+</head>
 
 <body>
-    <nav th:replace="~{layout :: navbar}"></nav>
-    <div th:replace="~{layout :: alerts}"></div>
+    <!-- Glow spots -->
+    <div class="glow-spot glow-spot-1"></div>
+    <div class="glow-spot glow-spot-2"></div>
 
-    <main>
-        <div class="auth-container" style="max-width: 600px; margin-top: 2rem; margin-bottom: 4rem;">
-            <div class="auth-card">
-                <h2><i class="fas fa-user-plus"></i> Create Account</h2>
+    <div class="auth-container">
+        <!-- Brand logo header -->
+        <div class="brand-header">
+            <div class="brand-logo">
+                <i class="fas fa-heartbeat"></i> <span>Medicalcare</span>
+            </div>
+            <p class="brand-tagline">Smarter care, at your fingertips.</p>
+        </div>
 
-                <form th:action="@{/register}" method="POST">
-                    <div class="form-group">
-                        <label for="name"><i class="fas fa-user"></i> Full Name</label>
-                        <input type="text" id="name" name="name" class="form-control" placeholder="Enter your full name" required>
+        <!-- Central form card -->
+        <div class="auth-form-wrap">
+            <!-- Flash Alerts -->
+            <div class="auth-alert auth-alert-success" th:if="${success}">
+                <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+            </div>
+            <div class="auth-alert auth-alert-error" th:if="${error}">
+                <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
+            </div>
+            <div class="auth-alert auth-alert-warning" th:if="${warning}">
+                <i class="fas fa-exclamation-triangle"></i> <span th:text="${warning}"></span>
+            </div>
+
+            <div class="auth-form-header">
+                <div class="auth-avatar"><i class="fas fa-user-plus"></i></div>
+                <h2>Create your account</h2>
+                <p>Join Medicalcare and take control of your health</p>
+            </div>
+
+            <!-- Role Selector -->
+            <div class="role-tabs" id="role-tabs">
+                <div class="role-tab active" id="tab-patient" onclick="selectRole('patient')">
+                    <i class="fas fa-user-injured"></i>
+                    <span>Patient</span>
+                </div>
+                <div class="role-tab" id="tab-doctor" onclick="selectRole('doctor')">
+                    <i class="fas fa-user-md"></i>
+                    <span>Doctor</span>
+                </div>
+                <div class="role-tab" id="tab-hospital" onclick="selectRole('hospital')">
+                    <i class="fas fa-hospital"></i>
+                    <span>Hospital</span>
+                </div>
+            </div>
+
+            <form th:action="@{/register}" method="POST" id="reg-form" autocomplete="off">
+                    <input type="hidden" id="role" name="role" value="patient">
+
+                    <!-- Section Header (changes by role) -->
+                    <div class="section-label" id="section-info-label">
+                        <i class="fas fa-user" id="section-info-icon"></i>
+                        <span id="section-info-text">Personal Information</span>
                     </div>
 
-                    <div class="form-group">
-                        <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
-                        <input type="email" id="email" name="email" class="form-control" placeholder="Enter email" required>
+                    <div class="input-float">
+                        <label class="input-label" id="label-name" for="name">Full Name</label>
+                        <i class="fas fa-user input-icon" id="icon-name"></i>
+                        <input type="text" id="name" name="name" placeholder="e.g. Ravi Kumar" required>
                     </div>
 
-                    <div class="grid-2-1 gap-1">
-                        <div class="form-group">
-                            <label for="password"><i class="fas fa-lock"></i> Password</label>
-                            <input type="password" id="password" name="password" class="form-control" placeholder="Min 6 characters" required>
+                    <div class="input-float">
+                        <label class="input-label" for="email">Email Address</label>
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="input-float">
+                            <label class="input-label" for="password">Password</label>
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" name="password"
+                                   placeholder="Min 6 characters" required>
+                            <button type="button" class="input-toggle" onclick="togglePwd('password','eye1')">
+                                <i class="fas fa-eye" id="eye1"></i>
+                            </button>
                         </div>
-                        <div class="form-group">
-                            <label for="confirm_password"><i class="fas fa-check-double"></i> Confirm Password</label>
-                            <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat password" required>
+                        <div class="input-float">
+                            <label class="input-label" for="confirm_password">Confirm Password</label>
+                            <i class="fas fa-check-double input-icon"></i>
+                            <input type="password" id="confirm_password" name="confirm_password"
+                                   placeholder="Repeat password" required>
+                            <button type="button" class="input-toggle" onclick="togglePwd('confirm_password','eye2')">
+                                <i class="fas fa-eye" id="eye2"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="role"><i class="fas fa-user-tag"></i> Select Role</label>
-                        <select id="role" name="role" class="form-control" onchange="toggleDoctorFields()" required>
-                            <option value="patient">Patient</option>
-                            <option value="doctor">Doctor</option>
-                        </select>
+                    <div class="input-float">
+                        <label class="input-label" id="label-phone" for="phone">Phone Number</label>
+                        <i class="fas fa-phone input-icon" id="icon-phone"></i>
+                        <input type="tel" id="phone" name="phone" placeholder="10-digit mobile number" required>
                     </div>
 
-                    <!-- Doctor Specific Fields -->
-                    <div id="doctor-fields" style="display: none;" class="p-3 bg-light rounded mb-3 border">
-                        <h4 class="mb-3 text-primary"><i class="fas fa-stethoscope"></i> Professional Details</h4>
-                        
-                        <div class="form-group">
-                            <label for="specialization">Specialization</label>
-                            <input type="text" id="specialization" name="specialization" class="form-control" placeholder="e.g. Cardiologist, Dermatologist">
+                    <div class="input-float textarea-float">
+                        <label class="input-label" id="label-address" for="address">Residential Address</label>
+                        <i class="fas fa-map-marker-alt input-icon"></i>
+                        <textarea id="address" name="address" rows="2"
+                                  placeholder="Enter your full address" required></textarea>
+                    </div>
+
+                    <!-- Doctor Fields (hidden by default) -->
+                    <div class="doctor-section" id="doctor-fields">
+                        <div class="doctor-section-title">
+                            <i class="fas fa-stethoscope"></i> Professional Details
                         </div>
 
-                        <div class="form-group">
-                            <label for="qualification">Qualifications</label>
-                            <input type="text" id="qualification" name="qualification" class="form-control" placeholder="e.g. MBBS, MD">
+                        <div class="input-float">
+                            <label class="input-label" for="hospital_id">Affiliated Hospital</label>
+                            <i class="fas fa-hospital input-icon"></i>
+                            <select id="hospital_id" name="hospital_id" style="padding-left: 2.65rem;">
+                                <option value="">— Select Hospital —</option>
+                                <option th:each="h : ${hospitals}" th:value="${h.id}" th:text="${h.name}"></option>
+                            </select>
                         </div>
 
-                        <div class="grid-2-1 gap-1">
-                            <div class="form-group">
-                                <label for="experience">Experience (Years)</label>
-                                <input type="number" id="experience" name="experience" class="form-control" placeholder="e.g. 5">
+                        <div class="input-float">
+                            <label class="input-label" for="specialization">Specialization</label>
+                            <i class="fas fa-stethoscope input-icon"></i>
+                            <input type="text" id="specialization" name="specialization"
+                                   placeholder="e.g. Cardiologist, Dermatologist">
+                        </div>
+
+                        <div class="input-float">
+                            <label class="input-label" for="qualification">Qualifications</label>
+                            <i class="fas fa-graduation-cap input-icon"></i>
+                            <input type="text" id="qualification" name="qualification"
+                                   placeholder="e.g. MBBS, MD, DNB">
+                        </div>
+
+                        <div class="form-grid-2">
+                            <div class="input-float">
+                                <label class="input-label" for="experience">Experience (Years)</label>
+                                <i class="fas fa-briefcase-medical input-icon"></i>
+                                <input type="number" id="experience" name="experience"
+                                       placeholder="e.g. 5" min="0">
                             </div>
-                            <div class="form-group">
-                                <label for="consultation_fee">Consultation Fee (₹)</label>
-                                <input type="number" id="consultation_fee" name="consultation_fee" class="form-control" placeholder="e.g. 500" value="0.0">
+                            <div class="input-float">
+                                <label class="input-label" for="consultation_fee">Fee (₹)</label>
+                                <i class="fas fa-rupee-sign input-icon"></i>
+                                <input type="number" id="consultation_fee" name="consultation_fee"
+                                       placeholder="e.g. 500" value="0.0">
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="phone"><i class="fas fa-phone"></i> Phone Number</label>
-                        <input type="tel" id="phone" name="phone" class="form-control" placeholder="10 digit mobile" required>
+                    <!-- Hospital Fields (hidden by default) -->
+                    <div class="doctor-section" id="hospital-fields">
+                        <div class="doctor-section-title">
+                            <i class="fas fa-hospital-alt"></i> Hospital Registration Details
+                        </div>
+
+                        <!-- Hospital Type -->
+                        <div class="input-float">
+                            <label class="input-label" for="hosp_type">Hospital Type</label>
+                            <i class="fas fa-clinic-medical input-icon"></i>
+                            <select id="hosp_type" name="specialization" style="padding-left: 2.65rem;">
+                                <option value="">— Select Hospital Type —</option>
+                                <option value="Government Hospital">Government Hospital</option>
+                                <option value="Private Hospital">Private Hospital</option>
+                                <option value="Multi-Specialty Hospital">Multi-Specialty Hospital</option>
+                                <option value="Super-Specialty Hospital">Super-Specialty Hospital</option>
+                                <option value="Clinic / Polyclinic">Clinic / Polyclinic</option>
+                                <option value="Nursing Home">Nursing Home</option>
+                                <option value="Diagnostic Center">Diagnostic Center</option>
+                                <option value="Trauma Center">Trauma Center</option>
+                            </select>
+                        </div>
+
+                        <!-- License / Registration Number -->
+                        <div class="input-float">
+                            <label class="input-label" for="hosp_license">License / Registration Number</label>
+                            <i class="fas fa-id-card input-icon"></i>
+                            <input type="text" id="hosp_license" name="qualification"
+                                   placeholder="e.g. MCI/2024/HOS-00123">
+                        </div>
+
+                        <!-- Beds & Emergency in a 2-column row -->
+                        <div class="form-grid-2">
+                            <div class="input-float">
+                                <label class="input-label" for="hosp_beds">Number of Beds</label>
+                                <i class="fas fa-procedures input-icon"></i>
+                                <input type="number" id="hosp_beds" name="experience"
+                                       placeholder="e.g. 150" min="1">
+                            </div>
+                            <div class="input-float">
+                                <label class="input-label" for="hosp_emergency">Emergency Services</label>
+                                <i class="fas fa-ambulance input-icon"></i>
+                                <select id="hosp_emergency" name="consultation_fee" style="padding-left:2.65rem;">
+                                    <option value="1">Yes — 24/7 Emergency</option>
+                                    <option value="0">No Emergency Unit</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Departments / Specialties -->
+                        <div class="input-float">
+                            <label class="input-label" for="hospital_specialties">Departments &amp; Specialties</label>
+                            <i class="fas fa-notes-medical input-icon"></i>
+                            <input type="text" id="hospital_specialties" name="hospital_specialties"
+                                   placeholder="e.g. Cardiology, Pediatrics, Neurology, Orthopedics">
+                        </div>
+
+                        <!-- Operating Hours -->
+                        <div class="input-float">
+                            <label class="input-label" for="hosp_hours">OPD Operating Hours</label>
+                            <i class="fas fa-clock input-icon"></i>
+                            <input type="text" id="hosp_hours"
+                                   placeholder="e.g. Mon-Sat 8:00 AM - 8:00 PM" readonly
+                                   style="cursor:pointer;"
+                                   onclick="this.removeAttribute('readonly'); this.focus();">
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="address"><i class="fas fa-map-marker-alt"></i> Residential Address</label>
-                        <textarea id="address" name="address" class="form-control" rows="3" placeholder="Enter complete address" required></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100 mt-2">
-                        <i class="fas fa-user-plus"></i> Register
+                    <button type="submit" class="auth-submit-btn" id="reg-btn">
+                        <i class="fas fa-user-plus"></i>
+                        <span id="btn-label">Create Patient Account</span>
                     </button>
                 </form>
 
-                <p class="auth-link">
-                    Already have an account? <a th:href="@{/login}">Login here</a>
-                </p>
+                <div class="auth-divider">or</div>
+
+                <div class="auth-links">
+                    <p>Already have an account? <a th:href="@{/login}">Sign in here</a></p>
+                </div>
+            </div>
+
+            <!-- Bottom steps section -->
+            <div class="steps-section">
+                <div class="steps-grid">
+                    <div class="step-card">
+                        <div class="step-badge">1</div>
+                        <h3>Create your account</h3>
+                        <p>Choose your role and fill in your details</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-badge">2</div>
+                        <h3>Verify &amp; activate</h3>
+                        <p>Doctors await admin approval; patients are instant</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-badge">3</div>
+                        <h3>Start your journey</h3>
+                        <p>Book appointments, manage records, use AI tools</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </main>
+    </div>
 
-    <footer th:replace="~{layout :: footer}"></footer>
-    <script th:replace="~{layout :: scripts}"></script>
+    <script th:src="@{/js/script.js}"></script>
     <script>
-        // Make sure fields are shown if page reloads with doctor selected
-        document.addEventListener('DOMContentLoaded', toggleDoctorFields);
+        let currentRole = 'patient';
+
+        // Field config per role
+        const ROLE_CONFIG = {
+            patient: {
+                sectionIcon:  'fa-user',
+                sectionTitle: 'Personal Information',
+                nameLabel:    'Full Name',
+                namePlaceholder: 'e.g. Ravi Kumar',
+                nameIcon:     'fa-user',
+                phoneLabel:   'Phone Number',
+                phoneIcon:    'fa-phone',
+                phonePlaceholder: '10-digit mobile number',
+                addressLabel: 'Residential Address',
+                addressPlaceholder: 'Enter your full address',
+            },
+            doctor: {
+                sectionIcon:  'fa-user-md',
+                sectionTitle: 'Personal Information',
+                nameLabel:    'Full Name',
+                namePlaceholder: 'e.g. Dr. Ravi Kumar',
+                nameIcon:     'fa-user-md',
+                phoneLabel:   'Mobile Number',
+                phoneIcon:    'fa-phone',
+                phonePlaceholder: '10-digit mobile number',
+                addressLabel: 'Residential Address',
+                addressPlaceholder: 'Enter your residential address',
+            },
+            hospital: {
+                sectionIcon:  'fa-hospital-alt',
+                sectionTitle: 'Hospital Information',
+                nameLabel:    'Hospital Name',
+                namePlaceholder: 'e.g. City Medical Centre',
+                nameIcon:     'fa-hospital',
+                phoneLabel:   'Emergency Hotline',
+                phoneIcon:    'fa-phone-volume',
+                phonePlaceholder: 'e.g. +91 98765-43210',
+                addressLabel: 'Hospital Address',
+                addressPlaceholder: 'Full street address with city, state & PIN',
+            }
+        };
+
+        function selectRole(role) {
+            currentRole = role;
+            document.getElementById('role').value = role;
+
+            document.getElementById('tab-patient').classList.toggle('active', role === 'patient');
+            document.getElementById('tab-doctor').classList.toggle('active', role === 'doctor');
+            document.getElementById('tab-hospital').classList.toggle('active', role === 'hospital');
+
+            const doctorFields = document.getElementById('doctor-fields');
+            doctorFields.classList.toggle('visible', role === 'doctor');
+
+            const hospitalFields = document.getElementById('hospital-fields');
+            hospitalFields.classList.toggle('visible', role === 'hospital');
+
+            // Update labels/icons/placeholders based on role
+            const cfg = ROLE_CONFIG[role];
+
+            // Section header
+            document.getElementById('section-info-icon').className = 'fas ' + cfg.sectionIcon;
+            document.getElementById('section-info-text').textContent = cfg.sectionTitle;
+
+            // Name field
+            document.getElementById('label-name').textContent = cfg.nameLabel;
+            document.getElementById('icon-name').className = 'fas ' + cfg.nameIcon + ' input-icon';
+            document.getElementById('name').placeholder = cfg.namePlaceholder;
+
+            // Phone field
+            document.getElementById('label-phone').textContent = cfg.phoneLabel;
+            document.getElementById('icon-phone').className = 'fas ' + cfg.phoneIcon + ' input-icon';
+            document.getElementById('phone').placeholder = cfg.phonePlaceholder;
+
+            // Address field
+            document.getElementById('label-address').textContent = cfg.addressLabel;
+            document.getElementById('address').placeholder = cfg.addressPlaceholder;
+
+            const btnLabel = document.getElementById('btn-label');
+            if (role === 'doctor') {
+                btnLabel.textContent = 'Create Doctor Account';
+            } else if (role === 'hospital') {
+                btnLabel.textContent = 'Register Hospital';
+            } else {
+                btnLabel.textContent = 'Create Patient Account';
+            }
+        }
+
+        function togglePwd(fieldId, eyeId) {
+            const input = document.getElementById(fieldId);
+            const eye   = document.getElementById(eyeId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                eye.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // Password match validation
+        document.getElementById('reg-form').addEventListener('submit', function(e) {
+            const pwd  = document.getElementById('password').value;
+            const cpwd = document.getElementById('confirm_password').value;
+            if (pwd !== cpwd) {
+                e.preventDefault();
+                const existingAlert = document.querySelector('.auth-alert-error');
+                if (!existingAlert) {
+                    const alert = document.createElement('div');
+                    alert.className = 'auth-alert auth-alert-error';
+                    alert.innerHTML = '<i class="fas fa-exclamation-circle"></i> Passwords do not match. Please try again.';
+                    document.querySelector('.auth-form-wrap').insertBefore(
+                        alert, document.querySelector('.auth-form-header')
+                    );
+                    setTimeout(() => alert.remove(), 4000);
+                }
+            }
+        });
     </script>
 </body>
-
 </html>

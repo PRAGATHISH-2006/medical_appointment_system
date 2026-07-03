@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('My Prescriptions - Medicalcare', ~{::style})}">
+<style>
+  @import url('/css/dashboard.css');
+
+  .pres-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .pres-card {
+    background: white;
+    border-radius: 1.25rem;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pres-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  }
+
+  .pres-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.07);
+    border-color: #3b82f6;
+  }
+
+  .pres-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 0.75rem;
+  }
+
+  .pres-doctor-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .doc-avatar-small {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .pres-date {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .pres-body {
+    margin-bottom: 1.25rem;
+  }
+
+  .med-item {
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: #334155;
+    border-left: 3px solid #3b82f6;
+  }
+
+  .pres-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+</style>
+</head>
+
+<body class="dash-page">
+  <nav th:replace="~{layout :: navbar}"></nav>
+  <div th:replace="~{layout :: alerts}"></div>
+
+  <main>
+    <div class="dashboard animate-fade">
+      <div class="container">
+
+        <!-- ── HEADER ── -->
+        <div class="dash-header" style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);">
+          <div class="dash-header-text">
+            <h1><i class="fas fa-file-prescription"></i> My Prescriptions</h1>
+            <p>Access, view details, and instantly download PDF copies of your digital prescriptions.</p>
+          </div>
+        </div>
+
+        <!-- ── PRESCRIPTIONS LIST ── -->
+        <th:block th:if="${not #lists.isEmpty(prescriptions)}">
+          <div class="pres-grid">
+            <div th:each="pres : ${prescriptions}" class="pres-card">
+              <div class="pres-header">
+                <div class="pres-doctor-info">
+                  <div class="doc-avatar-small" th:text="${#strings.substring(pres.doctor.name, 0, 1)}">D</div>
+                  <div>
+                    <strong style="color: #1e293b; font-size: 0.95rem; display: block;" th:text="'Dr. ' + ${pres.doctor.name}">Dr. Name</strong>
+                    <span style="font-size: 0.75rem; color: #64748b;" th:text="${pres.doctor.specialization}">Cardiologist</span>
+                  </div>
+                </div>
+                <div class="pres-date" th:text="${#temporals.format(pres.createdAt, 'dd-MMM-yyyy')}">Date</div>
+              </div>
+
+              <div class="pres-body">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">
+                  <i class="fas fa-pills" style="color:#3b82f6;"></i> Prescribed Medicines:
+                </div>
+                <div th:each="med : ${#strings.arraySplit(pres.medicines, ',')}" class="med-item" th:text="${med.trim()}">
+                  Medicine Name
+                </div>
+                <div th:if="${pres.instructions}" style="margin-top: 0.75rem; font-size: 0.78rem; color: #64748b; font-style: italic; background: #fefbeb; padding: 0.5rem; border-radius: 0.35rem; border: 1px solid #fef3c7;">
+                  <strong>Note: </strong> <span th:text="${pres.instructions}">instructions</span>
+                </div>
+              </div>
+
+              <div class="pres-actions">
+                <a th:href="@{'/patient/prescription/download/' + ${pres.id}}" class="btn-xs btn-xs-primary" style="flex:1; text-align:center; padding: 0.6rem; font-size: 0.82rem; text-decoration: none;">
+                  <i class="fas fa-download"></i> Download PDF
+                </a>
+              </div>
+            </div>
+          </div>
+        </th:block>
+
+        <th:block th:if="${#lists.isEmpty(prescriptions)}">
+          <div class="empty-state" style="margin-top: 3rem;">
+            <i class="fas fa-file-prescription" style="font-size: 4rem; opacity: 0.2; margin-bottom: 1rem;"></i>
+            <h3>No Prescriptions Found</h3>
+            <p>You have not been issued any digital prescriptions yet.</p>
+          </div>
+        </th:block>
+
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{layout :: footer}"></footer>
+  <script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>

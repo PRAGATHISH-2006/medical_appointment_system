@@ -1,70 +1,125 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{layout :: head('System Audit Trail - Medicalcare', ~{::style})}">
+<style>
+@import url('/css/dashboard.css');
+.action-upload  { background:#d1fae5;color:#065f46; }
+.action-delete  { background:#fee2e2;color:#991b1b; }
+.action-share   { background:#eef2ff;color:#4f46e5; }
+.action-edit    { background:#fef3c7;color:#92400e; }
+.action-default { background:#f1f5f9;color:#475569; }
+.log-row { animation:rowIn 0.35s ease both; }
+.log-row:nth-child(1){ animation-delay:0.03s; }
+.log-row:nth-child(2){ animation-delay:0.06s; }
+.log-row:nth-child(3){ animation-delay:0.09s; }
+.log-row:nth-child(n+4){ animation-delay:0.12s; }
+@keyframes rowIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body class="dash-page">
+<nav th:replace="~{layout :: navbar}"></nav>
+<div th:replace="~{layout :: alerts}"></div>
+<main>
+  <div class="dashboard animate-fade">
+    <div class="container" style="max-width:1080px;">
 
-<head th:replace="~{layout :: head('System Audit Trail - Medical Care', ~{})}"></head>
-
-<body>
-    <nav th:replace="~{layout :: navbar}"></nav>
-    <div th:replace="~{layout :: alerts}"></div>
-
-    <main>
-        <div class="dashboard animate-fade">
-            <div class="container" style="max-width: 1000px; margin-bottom: 4rem;">
-                <header class="mb-4">
-                    <h1><i class="fas fa-history"></i> System Audit Trail</h1>
-                    <p>Track uploads, sharing, deletion, and credentials changes occurring across the platform.</p>
-                </header>
-
-                <div class="card">
-                    <h3 class="mb-4"><i class="fas fa-list"></i> Activity Log Archive</h3>
-
-                    <th:block th:if="${not #lists.isEmpty(audit_logs)}">
-                        <div class="table-container">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Timestamp</th>
-                                        <th>User ID</th>
-                                        <th>Action</th>
-                                        <th>Resource Target</th>
-                                        <th>Details</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="log : ${audit_logs}">
-                                        <td th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}">Time</td>
-                                        <td th:text="${log.userId}">1</td>
-                                        <td>
-                                            <span class="badge" th:classappend="${log.action == 'Upload' ? 'badge-success' : (log.action == 'Delete' ? 'badge-danger' : (log.action == 'Share' ? 'badge-primary' : 'badge-warning'))}" th:text="${log.action}">Action</span>
-                                        </td>
-                                        <td th:text="${log.targetType} + ' (#' + ${log.targetId} + ')'">Target</td>
-                                        <td th:text="${log.details}">Details</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </th:block>
-                    
-                    <th:block th:if="${#lists.isEmpty(audit_logs)}">
-                        <p class="text-muted text-center py-4">No logged operations available.</p>
-                    </th:block>
-
-                    <a th:href="@{/admin/dashboard}" class="btn btn-secondary mt-3">
-                        <i class="fas fa-arrow-left"></i> Back to Dashboard
-                    </a>
-                </div>
-            </div>
+      <!-- Header -->
+      <div class="dash-header admin-header">
+        <div class="dash-header-text">
+          <h1><i class="fas fa-history"></i> System Audit Trail</h1>
+          <p>Track all uploads, sharing, deletions, and credential changes across the platform.</p>
         </div>
-    </main>
+        <a th:href="@{/admin/dashboard}" class="dash-header-badge" style="text-decoration:none;">
+          <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+      </div>
 
-    <footer th:replace="~{layout :: footer}"></footer>
-    <script th:replace="~{layout :: scripts}"></script>
-    <style>
-        .badge-primary { background: #3498db !important; }
-        .badge-success { background: #2ecc71 !important; }
-        .badge-danger { background: #e74c3c !important; }
-        .badge-warning { background: #f39c12 !important; }
-    </style>
+      <!-- Stats row -->
+      <div class="stats-grid" style="margin-bottom:1.5rem;">
+        <div class="pstat-card pstat-green">
+          <div class="pstat-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+          <div class="pstat-body">
+            <h3 th:text="${audit_logs.stream().filter(l -> l.action == 'Upload').count()}">0</h3>
+            <p>Uploads</p>
+          </div>
+        </div>
+        <div class="pstat-card pstat-blue">
+          <div class="pstat-icon"><i class="fas fa-share-alt"></i></div>
+          <div class="pstat-body">
+            <h3 th:text="${audit_logs.stream().filter(l -> l.action == 'Share').count()}">0</h3>
+            <p>Shares</p>
+          </div>
+        </div>
+        <div class="pstat-card pstat-rose">
+          <div class="pstat-icon"><i class="fas fa-trash"></i></div>
+          <div class="pstat-body">
+            <h3 th:text="${audit_logs.stream().filter(l -> l.action == 'Delete').count()}">0</h3>
+            <p>Deletions</p>
+          </div>
+        </div>
+        <div class="pstat-card pstat-violet">
+          <div class="pstat-icon"><i class="fas fa-list-alt"></i></div>
+          <div class="pstat-body">
+            <h3 th:text="${audit_logs.size()}">0</h3>
+            <p>Total Events</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Table -->
+      <div class="dash-card">
+        <div class="dash-card-header">
+          <div class="dash-card-title"><i class="fas fa-list icon-violet"></i> Activity Log Archive</div>
+          <span class="sbadge sbadge-violet" th:text="${audit_logs.size()} + ' records'">0</span>
+        </div>
+        <div class="dash-card-body" style="padding:0;">
+          <th:block th:if="${not #lists.isEmpty(audit_logs)}">
+            <div class="dtable-wrap" style="border:none;border-radius:0;">
+              <table class="dtable">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User ID</th>
+                    <th>Action</th>
+                    <th>Target</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="log-row" th:each="log : ${audit_logs}">
+                    <td style="white-space:nowrap;font-size:0.8rem;color:#64748b;">
+                      <i class="fas fa-clock" style="margin-right:0.3rem;"></i>
+                      <span th:text="${#temporals.format(log.timestamp, 'dd MMM · HH:mm:ss')}">Time</span>
+                    </td>
+                    <td>
+                      <span style="font-size:0.8rem;background:#f1f5f9;padding:0.2rem 0.5rem;border-radius:0.4rem;font-weight:700;color:#475569;"
+                            th:text="'#' + ${log.userId}">ID</span>
+                    </td>
+                    <td>
+                      <span class="sbadge"
+                            th:classappend="${log.action == 'Upload'} ? 'action-upload' : (${log.action == 'Delete'} ? 'action-delete' : (${log.action == 'Share'} ? 'action-share' : (${log.action == 'Edit'} ? 'action-edit' : 'action-default')))"
+                            th:text="${log.action}">Action</span>
+                    </td>
+                    <td style="font-size:0.82rem;" th:text="${log.targetType} + ' (#' + ${log.targetId} + ')'">Target</td>
+                    <td style="font-size:0.82rem;color:#64748b;max-width:260px;word-break:break-word;" th:text="${log.details}">Details</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </th:block>
+          <th:block th:if="${#lists.isEmpty(audit_logs)}">
+            <div class="empty-state" style="padding:4rem 2rem;">
+              <i class="fas fa-history"></i>
+              <p>No logged operations available yet.</p>
+            </div>
+          </th:block>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+<footer th:replace="~{layout :: footer}"></footer>
+<script th:replace="~{layout :: scripts}"></script>
 </body>
-
 </html>

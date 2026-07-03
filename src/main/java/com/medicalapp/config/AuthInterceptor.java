@@ -37,7 +37,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         // Check path permissions
-        if (uri.startsWith("/patient/") && !"patient".equals(role)) {
+        if (uri.startsWith("/patient/") && !"patient".equals(role) && !"admin".equals(role)) {
             response.sendRedirect("/login");
             return false;
         }
@@ -48,6 +48,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
 
         if (uri.startsWith("/admin/") && !"admin".equals(role)) {
+            response.sendRedirect("/login");
+            return false;
+        }
+
+        if (uri.startsWith("/hospital/") && !"hospital".equals(role)) {
             response.sendRedirect("/login");
             return false;
         }

@@ -287,9 +287,16 @@ public class PatientController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody);
     }
 
+    @Autowired
+    private HospitalAnnouncementRepository hospitalAnnouncementRepository;
+
     @GetMapping("/patient/appointment")
     public String appointment(Model model) {
-        List<User> doctors = userRepository.findByRoleAndIsApproved("doctor", true);
+        List<User> hospitals = userRepository.findByRoleAndIsApproved("hospital", true);
+        List<User> doctors = userRepository.findByRoleAndIsApproved("doctor", true).stream()
+                .filter(d -> d.isHospitalApproved() && "Active".equalsIgnoreCase(d.getAvailabilityStatus()))
+                .toList();
+        model.addAttribute("hospitals", hospitals);
         model.addAttribute("doctors", doctors);
         return "appointment";
     }
@@ -302,6 +309,7 @@ public class PatientController {
                                     @RequestParam(required = false, defaultValue = "") String notes,
                                     @RequestParam(required = false, defaultValue = "offline") String payment_method,
                                     @RequestParam(required = false, defaultValue = "pending") String payment_status,
+                                    @RequestParam(required = false, defaultValue = "Morning") String shift,
                                     HttpSession session,
                                     RedirectAttributes redirectAttributes) {
 
@@ -319,6 +327,7 @@ public class PatientController {
         appt.setPaymentMethod(payment_method);
         appt.setPaymentStatus(payment_status);
         appt.setAmount(doctor.getConsultationFee());
+        appt.setShift(shift);
         appointmentRepository.save(appt);
 
         if ("online".equalsIgnoreCase(payment_method)) {
@@ -345,6 +354,14 @@ public class PatientController {
         model.addAttribute("current_doctors", cds);
         model.addAttribute("prescriptions", prescriptionMap);
         return "current_doctor";
+    }
+
+    @GetMapping("/patient/prescriptions")
+    public String prescriptions(HttpSession session, Model model) {
+        Long patientId = (Long) session.getAttribute("user_id");
+        List<Prescription> list = prescriptionRepository.findByPatientId(patientId);
+        model.addAttribute("prescriptions", list);
+        return "patient_prescriptions";
     }
 
     @GetMapping("/patient/prescription/download/{prescriptionId}")
@@ -376,5 +393,39 @@ public class PatientController {
     @GetMapping("/patient/ai-assistant")
     public String aiAssistant() {
         return "ai_assistant";
+    }
+
+    @GetMapping("/patient/hospital/{hospitalId}")
+    public String hospitalProfile(@PathVariable Long hospitalId, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        Optional<User> hospOpt = userRepository.findById(hospitalId);
+        if (hospOpt.isPresent()) {
+            User hospital = hospOpt.get();
+            if ("hospital".equalsIgnoreCase(hospital.getRole()) && hospital.isApproved()) {
+                List<User> doctors = userRepository.findByHospitalIdAndRoleAndHospitalApprovedAndIsApproved(hospitalId, "doctor", true, true).stream()
+                        .filter(d -> "Active".equalsIgnoreCase(d.getAvailabilityStatus()))
+                        .toList();
+                List<HospitalAnnouncement> announcements = hospitalAnnouncementRepository.findByHospitalIdAndVisibleToPatientsOrderByCreatedAtDesc(hospitalId, true);
+
+                List<Appointment> allAppts = appointmentRepository.findByDoctorHospitalId(hospitalId);
+                long totalPatients = allAppts.stream().map(a -> a.getPatient().getId()).distinct().count();
+                double totalRevenue = allAppts.stream()
+                        .filter(a -> "approved".equalsIgnoreCase(a.getStatus()))
+                        .mapToDouble(Appointment::getAmount)
+                        .sum();
+
+                Map<String, Object> stats = new HashMap<>();
+                stats.put("total_patients", totalPatients);
+                stats.put("total_revenue", totalRevenue);
+                stats.put("total_appointments", allAppts.size());
+
+                model.addAttribute("hospital", hospital);
+                model.addAttribute("doctors", doctors);
+                model.addAttribute("announcements", announcements);
+                model.addAttribute("stats", stats);
+                return "hospital_profile";
+            }
+        }
+        redirectAttributes.addFlashAttribute("error", "Hospital not found or not active.");
+        return "redirect:/patient/dashboard";
     }
 }

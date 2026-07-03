@@ -41,6 +41,9 @@ public class Appointment {
 
     private double amount = 0.0;
 
+    @Column(name = "shift")
+    private String shift; // Morning, Afternoon, Evening
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -77,6 +80,9 @@ public class Appointment {
 
     public double getAmount() { return amount; }
     public void setAmount(double amount) { this.amount = amount; }
+
+    public String getShift() { return shift; }
+    public void setShift(String shift) { this.shift = shift; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

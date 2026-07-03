@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head th:replace="~{layout :: head('Announcements - Medicalcare', ~{::style})}">
+<style>
+  @import url('/css/dashboard.css');
+  /* Custom form styling */
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  .form-group label {
+    display: block; font-size: 0.78rem; font-weight: 700; color: #475569; margin-bottom: 0.4rem;
+  }
+  .form-control {
+    width: 100%; padding: 0.8rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.75rem;
+    font-size: 0.9rem; background: #f8fafc; outline: none; transition: border-color 0.2s;
+  }
+  .form-control:focus {
+    border-color: #10b981; background: white;
+  }
+  .form-check {
+    display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;
+  }
+  .form-check input {
+    width: 1.1rem; height: 1.1rem; accent-color: #10b981; cursor: pointer;
+  }
+  .form-check label {
+    font-size: 0.85rem; color: #475569; cursor: pointer; font-weight: 500;
+  }
+  /* Announcement cards */
+  .announcement-card {
+    background: white; border-radius: 1rem; padding: 1.5rem; border: 2px solid #e2e8f0;
+    margin-bottom: 1rem; position: relative; transition: transform 0.2s;
+  }
+  .announcement-card:hover {
+    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+  .ann-meta {
+    font-size: 0.75rem; color: #94a3b8; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;
+  }
+  .ann-badge {
+    font-size: 0.65rem; font-weight: 700; border-radius: 2rem; padding: 0.15rem 0.5rem;
+  }
+</style>
+</head>
+
+<body class="dash-page">
+  <nav th:replace="~{layout :: navbar}"></nav>
+  <div th:replace="~{layout :: alerts}"></div>
+
+  <main>
+    <div class="dashboard animate-fade">
+      <div class="container">
+
+        <!-- ── HEADER ── -->
+        <div class="dash-header" style="background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);">
+          <div class="dash-header-text">
+            <h1><i class="fas fa-bullhorn"></i> Broadcast Announcements</h1>
+            <p>Publish guidelines, updates, or notices for your doctors and patients.</p>
+          </div>
+          <a th:href="@{/hospital/dashboard}" class="dash-header-badge" style="text-decoration:none;">
+            <i class="fas fa-chevron-left"></i> Dashboard
+          </a>
+        </div>
+
+        <div class="dash-grid-3-1">
+
+          <!-- ── LEFT: View Broadcast History ── -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title"><i class="fas fa-history icon-blue"></i> Broadcast Logs</div>
+              <span class="sbadge sbadge-blue" th:text="${announcements.size()} + ' sent'">0</span>
+            </div>
+            <div class="dash-card-body">
+              <th:block th:if="${not #lists.isEmpty(announcements)}">
+                <div th:each="ann : ${announcements}" class="announcement-card">
+                  <div class="ann-meta">
+                    <span><i class="far fa-clock"></i> <span th:text="${#temporals.format(ann.createdAt, 'dd-MMM-yyyy hh:mm a')}">Date</span></span>
+                    <span th:if="${ann.visibleToPatients}" class="ann-badge sbadge-green"><i class="fas fa-eye"></i> Public (Patients &amp; Doctors)</span>
+                    <span th:if="${!ann.visibleToPatients}" class="ann-badge sbadge-blue"><i class="fas fa-eye-slash"></i> Private (Doctors Only)</span>
+                  </div>
+                  <h3 style="font-family:'Outfit',sans-serif;font-weight:700;color:#1e293b;margin-bottom:0.5rem;" th:text="${ann.title}">Announcement Title</h3>
+                  <p style="font-size:0.9rem;color:#475569;line-height:1.5;white-space:pre-line;" th:text="${ann.message}">Message body details...</p>
+                </div>
+              </th:block>
+              <th:block th:if="${#lists.isEmpty(announcements)}">
+                <div class="empty-state">
+                  <i class="fas fa-comment-slash" style="opacity:0.3;"></i>
+                  <p>No announcements broadcasted yet. Write one on the right to begin.</p>
+                </div>
+              </th:block>
+            </div>
+          </div>
+
+          <!-- ── RIGHT: Send New Broadcast ── -->
+          <div class="dash-card">
+            <div class="dash-card-header">
+              <div class="dash-card-title"><i class="fas fa-paper-plane icon-green"></i> New Broadcast</div>
+            </div>
+            <div class="dash-card-body">
+              <form th:action="@{/hospital/announcements}" method="POST">
+                <div class="form-group">
+                  <label for="title">Announcement Title</label>
+                  <input type="text" id="title" name="title" class="form-control" placeholder="e.g. Server Maintenance Notice" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="message">Detailed Message</label>
+                  <textarea id="message" name="message" class="form-control" rows="6" style="resize:none;" placeholder="Write announcements details..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                  <div class="form-check">
+                    <input type="checkbox" id="visibleToPatients" name="visibleToPatients" value="true">
+                    <label for="visibleToPatients">Make visible to Patients</label>
+                  </div>
+                  <small style="display:block;margin-top:0.25rem;font-size:0.75rem;color:#94a3b8;">
+                    If checked, patients will see this alert when visiting your hospital's profile. Otherwise, it only appears on your doctors' dashboards.
+                  </small>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" style="background:#10b981;border-color:#10b981;margin-top:0.75rem;">
+                  <i class="fas fa-broadcast-tower"></i> Publish Announcement
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer th:replace="~{layout :: footer}"></footer>
+  <script th:replace="~{layout :: scripts}"></script>
+</body>
+</html>
