@@ -74,8 +74,8 @@
 | **Use Case** | Provides preliminary health guidance |
 | **AI Model** | Groq → Llama 3.1 8B Instant |
 | **Where Used** | AI Healthcare Hub → "Symptom Checker" tab |
-| **Source File** | `AiAgentService.java` → `checkSymptoms()` + `handleGeminiChat("symptoms")` |
-| **API Route** | `POST /api/ai/gemini-chat` with `agentType=symptoms` |
+| **Source File** | `AiAgentService.java` → `handleAiChat("symptoms")` |
+| **API Route** | `POST /api/ai/chat` with `agentType=symptoms` |
 
 **How It Works:**
 1. Patient describes symptoms in plain text:
@@ -152,8 +152,8 @@ The agent monitors 3 types of reminders automatically:
 | **Use Case** | Answers hospital-related queries conversationally |
 | **AI Model** | Groq → Llama 3.1 8B Instant |
 | **Where Used** | AI Healthcare Hub → "Hospital Info" tab |
-| **Source File** | `AiAgentService.java` → `answerHospitalQuery()` + `handleGeminiChat("hospital")` |
-| **API Route** | `POST /api/ai/gemini-chat` with `agentType=hospital` |
+| **Source File** | `AiAgentService.java` → `handleAiChat("hospital")` |
+| **API Route** | `POST /api/ai/chat` with `agentType=hospital` |
 
 **How It Works:**
 1. Visitor/patient asks a hospital question:
@@ -194,11 +194,13 @@ Patient Question / Request
   Response to Patient
 ```
 
-**Key Detection Logic** — The system auto-detects Groq vs Google Gemini:
+**Key Detection Logic** — The system auto-detects the AI provider from the API key prefix:
 ```java
-boolean isGroq = geminiApiKey.startsWith("gsk_");
-// → routes to api.groq.com (OpenAI-compatible)
+// If key starts with "gsk_" → Groq API is used
+boolean isGroq = apiKey.startsWith("gsk_");
+// → routes to api.groq.com (OpenAI-compatible endpoint)
 // → uses Llama 3.1 8B Instant model
+// This project uses ONLY Groq — no Google Gemini
 ```
 
 ---
