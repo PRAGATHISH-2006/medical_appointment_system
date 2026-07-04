@@ -33,3 +33,7 @@ __pycache__/
 *.pyo
 instance/
 *.db
+
+# Local environment secrets — NEVER commit this
+.env
+.env.local
