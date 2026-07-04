@@ -16,6 +16,7 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
-EXPOSE 5000
+# Render injects PORT dynamically — expose it and pass to Spring Boot
+EXPOSE ${PORT:-5000}
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-5000} -jar app.jar"]
